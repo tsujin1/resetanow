@@ -88,7 +88,7 @@ export function LoginForm({
   return (
     <div className={cn("grid gap-6", className)} {...props}>
       <Card className="border-border shadow-lg">
-        <CardHeader className="space-y-1 pb-6 pt-8">
+        <CardHeader className="space-y-1 pb-6 pt-8 text-center">
           <CardTitle className="text-2xl font-bold tracking-tight">
             Welcome back
           </CardTitle>
