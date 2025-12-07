@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { MedCertTemplate } from "../components/features/rx/MedCertTemplate";
+import authService from "@/services/authService"; // Import the same service
 
 // 1. Schema
 const medCertSchema = z.object({
@@ -42,9 +43,34 @@ const dummyPatients = [
   { id: "3", name: "Jose Rizal", age: 32, sex: "Male", address: "789 Kalaw Dr, Laguna" },
 ];
 
+// Define the doctor type based on your database
+interface DoctorData {
+  name: string;
+  title: string;
+  role?: string;
+  contactNumber: string;
+  email: string;
+  licenseNo: string;
+  ptrNo: string;
+  s2No?: string;
+  signatureUrl?: string | null;
+  clinicAddress?: string;
+}
+
 export default function CreateMedCert() {
   const componentRef = useRef<HTMLDivElement>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [doctorData, setDoctorData] = useState<DoctorData>({
+    name: "",
+    title: "",
+    role: "",
+    contactNumber: "",
+    email: "",
+    licenseNo: "",
+    ptrNo: "",
+    signatureUrl: null,
+  });
+  const [isLoadingDoctor, setIsLoadingDoctor] = useState(true);
 
   const form = useForm({
     resolver: zodResolver(medCertSchema),
@@ -61,6 +87,46 @@ export default function CreateMedCert() {
   const values = useWatch({ control: form.control });
   const selectedPatient = dummyPatients.find(p => p.id === values.patientId);
 
+  // Fetch doctor data from the same source as Settings page
+  useEffect(() => {
+    const fetchDoctorData = async () => {
+      try {
+        setIsLoadingDoctor(true);
+        const data = await authService.getProfile(); // Use the same service
+        
+        setDoctorData({
+          name: data.name || "",
+          title: data.title || "",
+          role: data.role || "",
+          contactNumber: data.contactNumber || "",
+          email: data.email || "",
+          licenseNo: data.licenseNo || "",
+          ptrNo: data.ptrNo || "",
+          s2No: data.s2No || "",
+          signatureUrl: data.signatureUrl || null,
+          clinicAddress: data.clinicAddress || "",
+        });
+      } catch (error) {
+        console.error("Failed to load doctor profile:", error);
+        // Set fallback values if needed
+        setDoctorData({
+          name: "Full stack Developer",
+          title: "RMT, MD",
+          role: "General Physician",
+          contactNumber: "0917-123-4567",
+          email: "justinricher@gmail.com",
+          licenseNo: "123",
+          ptrNo: "456",
+          signatureUrl: null,
+        });
+      } finally {
+        setIsLoadingDoctor(false);
+      }
+    };
+
+    fetchDoctorData();
+  }, []);
+
   const handleDownloadPdf = async () => {
     const element = componentRef.current;
 
@@ -71,33 +137,19 @@ export default function CreateMedCert() {
 
     setIsGenerating(true);
     
-    // 1. DYNAMIC IMPORT CHANGE: We now import 'html2canvas-pro'
-    // Note: html2pdf.js uses html2canvas internally. 
-    // However, html2pdf.js allows us to pass a custom html2canvas instance if needed,
-    // OR we can use html2canvas-pro directly if we just want an image, 
-    // BUT since we want a PDF, we actually need to patch html2pdf's dependency or use a different approach.
-    
-    // WAIT: html2pdf.js bundles its own old version of html2canvas. 
-    // Simply installing html2canvas-pro won't fix 'html2pdf.js' automatically unless we configure it.
-    
-    // BETTER APPROACH: 
-    // We will use 'html2canvas-pro' to take the picture, and then 'jspdf' to make the PDF.
-    // This removes the 'html2pdf.js' dependency entirely, which is the root cause of the outdated engine.
-    
     try {
         const html2canvas = (await import('html2canvas-pro')).default;
         const { jsPDF } = await import('jspdf');
 
-        // 2. Capture the element using the modern engine
+        // Capture the element using the modern engine
         const canvas = await html2canvas(element, {
             scale: 2,
             useCORS: true,
             logging: true,
-            // We can still set a background color just to be safe for printing
             backgroundColor: "#ffffff" 
         });
 
-        // 3. Create PDF
+        // Create PDF
         const imgData = canvas.toDataURL('image/jpeg', 0.98);
         
         // A4 dimensions in mm
@@ -142,9 +194,13 @@ export default function CreateMedCert() {
           </div>
           {/* ACTION BUTTONS - Hidden on mobile (hidden), Visible on desktop (sm:flex) */}
           <div className="hidden sm:flex flex-wrap gap-2">
-            <Button variant="outline" onClick={handleDownloadPdf} disabled={isGenerating}>
+            <Button 
+              variant="outline" 
+              onClick={handleDownloadPdf} 
+              disabled={isGenerating || isLoadingDoctor || !selectedPatient}
+            >
               {isGenerating ? (
-                 <span className="animate-pulse">Generating...</span>
+                <span className="animate-pulse">Generating...</span>
               ) : (
                 <>
                   <Download className="mr-2 h-4 w-4" /> Download PDF
@@ -328,14 +384,63 @@ export default function CreateMedCert() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Doctor Info Preview (Optional) */}
+              {!isLoadingDoctor && (
+                <Card className="border-slate-200">
+                  <CardHeader className="border-b border-slate-100 bg-slate-50/50">
+                    <CardTitle className="text-base font-semibold text-slate-900">Doctor Information</CardTitle>
+                    <CardDescription className="text-sm">This will appear on the certificate</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-slate-600">Name:</span>
+                        <span className="font-medium text-slate-900">{doctorData.name}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-600">Title:</span>
+                        <span className="font-medium text-slate-900">{doctorData.title}</span>
+                      </div>
+                      {doctorData.role && (
+                        <div className="flex justify-between">
+                          <span className="text-slate-600">Specialty:</span>
+                          <span className="font-medium text-slate-900">{doctorData.role}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between">
+                        <span className="text-slate-600">Contact:</span>
+                        <span className="font-medium text-slate-900">{doctorData.contactNumber}</span>
+                      </div>
+                      {doctorData.signatureUrl && (
+                        <div className="mt-3 pt-3 border-t border-slate-200">
+                          <span className="text-slate-600">Signature:</span>
+                          <div className="mt-2 flex justify-center">
+                            <img 
+                              src={doctorData.signatureUrl} 
+                              alt="Signature" 
+                              className="h-12 object-contain"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </div>
         </Form>
         {/* MOBILE ACTION BUTTONS - Static (Standard Flow) */}
         <div className="mt-8 grid grid-cols-1 gap-3 sm:hidden pb-10">
-          <Button variant="outline" onClick={handleDownloadPdf} disabled={isGenerating} className="w-full">
+          <Button 
+            variant="outline" 
+            onClick={handleDownloadPdf} 
+            disabled={isGenerating || isLoadingDoctor || !selectedPatient}
+            className="w-full"
+          >
             {isGenerating ? (
-                <span className="animate-pulse">Generating...</span>
+              <span className="animate-pulse">Generating...</span>
             ) : (
               <>
                 <Download className="mr-2 h-4 w-4" /> Download PDF
@@ -349,9 +454,7 @@ export default function CreateMedCert() {
 
       </div> {/* This closes <div className="no-print"> */}
 
-      {/* OFF-SCREEN RENDER AREA 
-        FIX #2: Added explicit backgroundColor here as a safety net 
-      */}
+      {/* OFF-SCREEN RENDER AREA */}
       <div 
         style={{ 
           position: "absolute", 
@@ -360,29 +463,31 @@ export default function CreateMedCert() {
           backgroundColor: "#ffffff"
         }}
       >
-        <MedCertTemplate 
-          ref={componentRef} 
-          data={{
-            patientName: selectedPatient?.name,
-            age: selectedPatient?.age,
-            sex: selectedPatient?.sex,
-            address: selectedPatient?.address,
-            date: values.date || "",
-            reason: values.reason || "",
-            diagnosis: values.diagnosis || "",
-            recommendation: values.recommendation || ""
-          }}
-          doctor={{
-            name: "Justin Rich Dimaandal",
-            title: "RMT, MD",
-            specialty: "General Physician",
-            contactNumber: "0917-123-4567",
-            email: "justindimaandal.work@gmail.com",
-            licenseNo: "1234567",
-            ptrNo: "87654321",
-            signatureUrl: null 
-          }}
-        />
+        {!isLoadingDoctor && (
+          <MedCertTemplate 
+            ref={componentRef} 
+            data={{
+              patientName: selectedPatient?.name,
+              age: selectedPatient?.age,
+              sex: selectedPatient?.sex,
+              address: selectedPatient?.address,
+              date: values.date || "",
+              reason: values.reason || "",
+              diagnosis: values.diagnosis || "",
+              recommendation: values.recommendation || ""
+            }}
+            doctor={{
+              name: doctorData.name,
+              title: doctorData.title,
+              specialty: doctorData.role || "General Physician", 
+              contactNumber: doctorData.contactNumber,
+              email: doctorData.email,
+              licenseNo: doctorData.licenseNo,
+              ptrNo: doctorData.ptrNo,
+              signatureUrl: doctorData.signatureUrl
+            }}
+          />
+        )}
       </div>
     </div>
   );
