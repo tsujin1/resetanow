@@ -1,5 +1,6 @@
-import { useState } from "react"
-import { Link } from "react-router-dom"
+import { useState, useContext } from "react"
+import { Link, useNavigate } from "react-router-dom" // Added useNavigate
+import { AuthContext } from "@/context/AuthContext"   // Added AuthContext
 import { Loader2, AlertCircle, Mail, Lock, ArrowRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -14,6 +15,17 @@ import {
 } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
+// Define the error shape (same as we did in Register)
+interface ApiError {
+  response?: {
+    data?: {
+      message?: string;
+    };
+    status?: number;
+  };
+  message?: string;
+}
+
 export function LoginForm({
   className,
   ...props
@@ -22,9 +34,12 @@ export function LoginForm({
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
 
+  // 1. Hook into your real Auth Context
+  const { login } = useContext(AuthContext)!
+  const navigate = useNavigate()
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.id]: e.target.value })
-    // Clear error when user starts typing again
     if (error) setError("")
   }
 
@@ -32,42 +47,36 @@ export function LoginForm({
     setError("")
     setIsLoading(true)
     
-    // Simulate API call with specific error handling
-    setTimeout(() => {
-      // 1. Check for empty fields (Client-side validation)
-      if (!formData.email || !formData.password) {
-        setError("Please enter both email and password.")
-        setIsLoading(false)
-        return
-      }
-
-      // --- SIMULATION LOGIC (Replace this with your actual authService.login call) ---
-      // This demonstrates the specific alerts you requested.
-      
-      // Scenario A: Simulate "No existing account"
-      // (In a real app, this comes from the backend, e.g., 404 Not Found)
-      if (formData.email !== "demo@gmail.com") {
-        setError("No account found with this email address.")
-        setIsLoading(false)
-        return
-      }
-
-      // Scenario B: Simulate "Wrong Password"
-      // (In a real app, this comes from the backend, e.g., 401 Unauthorized)
-      if (formData.password !== "password123") {
-        setError("Invalid email or password. Please try again.")
-        setIsLoading(false)
-        return
-      }
-
-      // Scenario C: Success
-      console.log("Login successful")
+    // Client-side validation
+    if (!formData.email || !formData.password) {
+      setError("Please enter both email and password.")
       setIsLoading(false)
-      // Navigate to dashboard here...
-      
-      // --- END SIMULATION ---
+      return
+    }
 
-    }, 1500)
+    try {
+      // 2. REAL API CALL (Replaces the simulation)
+      await login(formData)
+      
+      console.log("Login successful")
+      navigate("/") // Redirect to dashboard
+      
+    } catch (err: unknown) {
+      const apiError = err as ApiError;
+      const status = apiError.response?.status;
+      const errorMessage = apiError.response?.data?.message || apiError.message || "Login failed.";
+
+      // 3. Map Backend Errors to UI Alerts
+      if (status === 404 || errorMessage.toLowerCase().includes("not found")) {
+        setError("No account found with this email address.");
+      } else if (status === 401 || status === 400 || errorMessage.toLowerCase().includes("invalid")) {
+        setError("Invalid credentials. Please check your password.");
+      } else {
+        setError("Something went wrong. Please try again later.");
+      }
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -79,7 +88,7 @@ export function LoginForm({
   return (
     <div className={cn("grid gap-6", className)} {...props}>
       <Card className="border-border shadow-lg">
-        <CardHeader className="space-y-1 pb-6 pt-8 text-center">
+        <CardHeader className="space-y-1 pb-6 pt-8">
           <CardTitle className="text-2xl font-bold tracking-tight">
             Welcome back
           </CardTitle>
