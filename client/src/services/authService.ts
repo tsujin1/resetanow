@@ -9,7 +9,6 @@ interface LoginData {
 }
 
 // --- Private Helpers ---
-
 const getStoredUser = () => {
   try {
     const userStr = localStorage.getItem("user");
@@ -19,7 +18,6 @@ const getStoredUser = () => {
   }
 };
 
-// FIX: Change 'any' to 'unknown'
 const setStoredUser = (data: unknown) => {
   localStorage.setItem("user", JSON.stringify(data));
 };
@@ -37,7 +35,6 @@ const getConfig = () => {
 };
 
 // --- Auth Services ---
-
 const register = async (userData: Partial<IDoctor>) => {
   const response = await axios.post(API_URL + "auth/register", userData);
   if (response.data) setStoredUser(response.data);
@@ -57,6 +54,12 @@ const logout = () => {
 const getProfile = async () => {
   try {
     const response = await axios.get(API_URL + "auth/profile", getConfig());
+
+    const user = getStoredUser();
+    if (user) {
+      setStoredUser({ ...user, ...response.data });
+    }
+
     return response.data;
   } catch (error) {
     if (error instanceof AxiosError && error.response?.status === 404) {
@@ -84,7 +87,9 @@ const updateProfile = async (data: Partial<IDoctor>) => {
     const response = await axios.put(API_URL + "auth/profile", data, getConfig());
 
     const user = getStoredUser();
-    if (user) setStoredUser({ ...user, ...data });
+    if (user) {
+      setStoredUser({ ...user, ...response.data });
+    }
 
     return response.data;
   } catch (error) {

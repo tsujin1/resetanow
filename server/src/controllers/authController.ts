@@ -10,7 +10,7 @@ const generateToken = (id: string) => {
   });
 };
 
-// @desc    Register new doctor (One-time setup usually)
+// @desc    Register new doctor
 // @route   POST /api/auth/register
 // @access  Public
 export const registerDoctor = async (req: Request, res: Response) => {
@@ -21,18 +21,15 @@ export const registerDoctor = async (req: Request, res: Response) => {
     return;
   }
 
-  // Check if doctor exists
   const doctorExists = await Doctor.findOne({ email });
   if (doctorExists) {
     res.status(400).json({ message: "User already exists" });
     return;
   }
 
-  // Hash password
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
 
-  // Create doctor
   const doctor = await Doctor.create({
     name,
     email,
@@ -58,7 +55,6 @@ export const registerDoctor = async (req: Request, res: Response) => {
 export const loginDoctor = async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
-  // Check for doctor email
   const doctor = await Doctor.findOne({ email });
 
   if (doctor && (await bcrypt.compare(password, doctor.password))) {
@@ -78,10 +74,21 @@ export const loginDoctor = async (req: Request, res: Response) => {
 // @access  Private
 export const getProfile = async (req: Request, res: Response) => {
   try {
-    // req.user is set by the 'protect' middleware (we will add this next)
     const doctor = await Doctor.findById((req as any).user._id).select("-password");
     if (doctor) {
-      res.json(doctor);
+      res.json({
+        _id: doctor._id,
+        name: doctor.name,
+        email: doctor.email,
+        title: doctor.title,
+        role: doctor.role,
+        contactNumber: doctor.contactNumber,
+        clinicAddress: doctor.clinicAddress,
+        licenseNo: doctor.licenseNo,
+        ptrNo: doctor.ptrNo,
+        s2No: doctor.s2No,
+        signatureUrl: doctor.signatureUrl,
+      });
     } else {
       res.status(404).json({ message: "Doctor not found" });
     }
@@ -107,12 +114,7 @@ export const updateProfile = async (req: Request, res: Response) => {
       doctor.licenseNo = req.body.licenseNo || doctor.licenseNo;
       doctor.ptrNo = req.body.ptrNo || doctor.ptrNo;
       doctor.s2No = req.body.s2No || doctor.s2No;
-      doctor.signatureUrl = req.body.signatureUrl || doctor.signatureUrl;
-
-      // Only update password if sent
-      if (req.body.password) {
-        doctor.password = await bcrypt.hash(req.body.password, 10);
-      }
+      doctor.signatureUrl = req.body.signatureUrl !== undefined ? req.body.signatureUrl : doctor.signatureUrl;
 
       const updatedDoctor = await doctor.save();
 
@@ -121,7 +123,13 @@ export const updateProfile = async (req: Request, res: Response) => {
         name: updatedDoctor.name,
         email: updatedDoctor.email,
         title: updatedDoctor.title,
-        // ... return other fields as needed for the frontend context
+        role: updatedDoctor.role,
+        contactNumber: updatedDoctor.contactNumber,
+        clinicAddress: updatedDoctor.clinicAddress,
+        licenseNo: updatedDoctor.licenseNo,
+        ptrNo: updatedDoctor.ptrNo,
+        s2No: updatedDoctor.s2No,
+        signatureUrl: updatedDoctor.signatureUrl,
       });
     } else {
       res.status(404).json({ message: "Doctor not found" });
