@@ -1,14 +1,12 @@
 import { Outlet } from "react-router-dom";
+import { Activity } from "lucide-react";
 import AppSidebar, { MobileSidebar } from "@/components/common/AppSidebar"; // Import both
 
 export default function AppLayout() {
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden">
       
-      {/* Desktop Sidebar 
-        (The AppSidebar component from the previous step is 'fixed', 
-        so it sits on top of the layout on the left side)
-      */}
+      {/* Desktop Sidebar */}
       <AppSidebar />
 
       {/* Main Content Area */}
@@ -16,11 +14,17 @@ export default function AppLayout() {
       <main className="flex-1 flex flex-col h-full overflow-hidden md:ml-64 transition-all duration-300">
         
         {/* Header - Mobile Only */}
-        <header className="h-16 border-b bg-white flex items-center px-4 md:hidden shrink-0 z-20 relative">
-          {/* 1. Mobile Menu Trigger */}
-          <MobileSidebar />
-          
-          <span className="font-bold text-lg ml-2 text-slate-900">ResetaNow</span>
+        <header className="h-16 border-b bg-white flex items-center px-4 md:hidden shrink-0 z-20">
+  
+          {/* Logo */}
+          <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center">
+            <Activity className="h-4 w-4 text-white" />
+          </div>
+
+          {/* Push the menu button to the right */}
+          <div className="ml-auto">
+            <MobileSidebar />
+          </div>
         </header>
 
         {/* Page Content (Scrollable) */}
