@@ -1,8 +1,9 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import SignatureCanvas from "react-signature-canvas";
+import authService from "@/services/authService";
 import { 
   Save, 
   Upload, 
@@ -12,7 +13,8 @@ import {
   FileBadge, 
   User, 
   PenTool, 
-  Eraser 
+  Eraser,
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,43 +28,85 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+// import { useNavigate } from "react-router-dom"; // Removed: No longer need to force logout on 404
 
 // --- 1. SCHEMA ---
 const settingsSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
-  title: z.string().min(1, "Title is required (e.g. MD)."),
-  role: z.string().min(2, "Role is required (e.g. General Physician)."),
+  title: z.string().optional(),
+  role: z.string().optional(),
   email: z.string().email("Please enter a valid email."),
-  contactNumber: z.string().min(1, "Contact number is required."),
-  clinicAddress: z.string().min(1, "Clinic address is required."),
-  licenseNo: z.string().min(1, "License number is required."),
-  ptrNo: z.string().min(1, "PTR number is required."),
+  contactNumber: z.string().optional(),
+  clinicAddress: z.string().optional(),
+  // Made these optional/loose since fallback data might be empty
+  licenseNo: z.string().min(1, "License number is required.").or(z.literal("")), 
+  ptrNo: z.string().optional(),
   s2No: z.string().optional(),
 });
 
 type SettingsValues = z.infer<typeof settingsSchema>;
 
 export default function Settings() {
+  // const navigate = useNavigate(); // Not needed for the fallback logic
   const [signaturePreview, setSignaturePreview] = useState<string | null>(null);
   const [signatureMode, setSignatureMode] = useState<"upload" | "draw">("draw");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  
   const sigCanvasRef = useRef<SignatureCanvas>(null);
 
   // --- 2. FORM INIT ---
   const form = useForm<SettingsValues>({
     resolver: zodResolver(settingsSchema),
     defaultValues: {
-      name: "Justin Rich Dimaandal",
-      title: "RMT, MD",
-      role: "General Physician",
-      email: "doctor@clinic.com",
-      contactNumber: "0917-123-4567",
-      clinicAddress: "Room 304, Medical Arts Bldg, City Hospital",
-      licenseNo: "1234567",
-      ptrNo: "87654321",
-      s2No: "123-456-789",
+      name: "",
+      title: "",
+      role: "",
+      email: "",
+      contactNumber: "",
+      clinicAddress: "",
+      licenseNo: "",
+      ptrNo: "",
+      s2No: "",
     },
   });
 
+  // --- 3. FETCH PROFILE ON LOAD ---
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        // This now returns data even if backend 404s (thanks to your service update)
+        const data = await authService.getProfile();
+        console.log("📝 Settings loaded data:", data);
+
+        // Reset form with whatever data we got (API or LocalStorage)
+        form.reset({
+            name: data.name || "",
+            title: data.title || "",
+            role: data.role || "",
+            email: data.email || "",
+            contactNumber: data.contactNumber || "",
+            clinicAddress: data.clinicAddress || "",
+            licenseNo: data.licenseNo || "",
+            ptrNo: data.ptrNo || "",
+            s2No: data.s2No || "",
+        });
+
+        if (data.signatureUrl) {
+            setSignaturePreview(data.signatureUrl);
+        }
+      } catch (error) {
+        console.error("❌ Component failed to load profile", error);
+        // We don't force logout here anymore, allowing the UI to stay active
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [form]); 
+
+  // Handle File Upload
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -86,14 +130,32 @@ export default function Settings() {
     }
   };
 
-  function onSubmit(data: SettingsValues) {
-    console.log("Settings Saved:", { ...data, signature: signaturePreview });
+  // --- 4. SUBMIT UPDATE ---
+  async function onSubmit(data: SettingsValues) {
+    setIsSaving(true);
+    try {
+        const payload = { ...data, signatureUrl: signaturePreview };
+        
+        // This will update API if possible, or fallback to LocalStorage if 404
+        await authService.updateProfile(payload);
+        
+        alert("Settings saved!"); // Simple alert for now
+    } catch (error) {
+        console.error(error);
+        alert("Failed to save settings.");
+    } finally {
+        setIsSaving(false);
+    }
+  }
+
+  if (isLoading) {
+      return <div className="flex h-full items-center justify-center">Loading settings...</div>;
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500"> {/* Added padding bottom for mobile if needed */}
+    <div className="space-y-6 animate-in fade-in duration-500 pb-10">
       
-      {/* --- HEADER ACTIONS --- */}
+      {/* HEADER ACTIONS */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
@@ -107,12 +169,11 @@ export default function Settings() {
           </div>
         </div>
         
-        {/* ACTION BUTTONS - Hidden on mobile (hidden), Visible on desktop (sm:flex) */}
-        <div className="hidden sm:flex flex-wrap gap-2">
-          <Button 
-            onClick={form.handleSubmit(onSubmit)} 
-          >
-            <Save className="mr-2 h-4 w-4" /> Save Changes
+        {/* DESKTOP SAVE BUTTON */}
+        <div className="hidden sm:block">
+          <Button onClick={form.handleSubmit(onSubmit)} disabled={isSaving}>
+            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+            Save Changes
           </Button>
         </div>
       </div>
@@ -121,10 +182,8 @@ export default function Settings() {
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            {/* --- LEFT COLUMN --- */}
+            {/* LEFT COLUMN */}
             <div className="space-y-6 lg:col-span-2">
-              
-              {/* Professional Profile */}
               <Card className="border-slate-200 shadow-sm">
                 <CardHeader className="flex flex-row items-center gap-4 border-b border-slate-100 bg-slate-50/50 py-4">
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-slate-600">
@@ -136,7 +195,6 @@ export default function Settings() {
                     </div>
                 </CardHeader>
                 <CardContent className="grid gap-6 pt-6">
-                  {/* Name Row */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField
                       control={form.control}
@@ -144,9 +202,7 @@ export default function Settings() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-slate-700">Full Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Juan Dela Cruz" {...field} />
-                          </FormControl>
+                          <FormControl><Input {...field} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -158,9 +214,7 @@ export default function Settings() {
                         render={({ field }) => (
                             <FormItem>
                             <FormLabel className="text-slate-700">Title</FormLabel>
-                            <FormControl>
-                                <Input placeholder="MD" {...field} />
-                            </FormControl>
+                            <FormControl><Input placeholder="MD" {...field} /></FormControl>
                             <FormMessage />
                             </FormItem>
                         )}
@@ -171,9 +225,7 @@ export default function Settings() {
                         render={({ field }) => (
                             <FormItem>
                             <FormLabel className="text-slate-700">Specialty</FormLabel>
-                            <FormControl>
-                                <Input placeholder="Physician" {...field} />
-                            </FormControl>
+                            <FormControl><Input placeholder="Physician" {...field} /></FormControl>
                             <FormMessage />
                             </FormItem>
                         )}
@@ -181,7 +233,6 @@ export default function Settings() {
                     </div>
                   </div>
 
-                  {/* Contact Row */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField
                         control={form.control}
@@ -189,9 +240,7 @@ export default function Settings() {
                         render={({ field }) => (
                             <FormItem>
                             <FormLabel className="text-slate-700">Email Address</FormLabel>
-                            <FormControl>
-                                <Input placeholder="doctor@clinic.com" {...field} />
-                            </FormControl>
+                            <FormControl><Input {...field} disabled /></FormControl>
                             <FormMessage />
                             </FormItem>
                         )}
@@ -202,9 +251,7 @@ export default function Settings() {
                         render={({ field }) => (
                             <FormItem>
                             <FormLabel className="text-slate-700">Contact Number</FormLabel>
-                            <FormControl>
-                                <Input placeholder="0917-XXX-XXXX" {...field} />
-                            </FormControl>
+                            <FormControl><Input placeholder="0917-XXX-XXXX" {...field} /></FormControl>
                             <FormMessage />
                             </FormItem>
                         )}
@@ -213,7 +260,6 @@ export default function Settings() {
                 </CardContent>
               </Card>
 
-              {/* Clinic Address */}
               <Card className="border-slate-200 shadow-sm">
                 <CardHeader className="flex flex-row items-center gap-4 border-b border-slate-100 bg-slate-50/50 py-4">
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-slate-600">
@@ -242,10 +288,8 @@ export default function Settings() {
               </Card>
             </div>
 
-            {/* --- RIGHT COLUMN --- */}
+            {/* RIGHT COLUMN */}
             <div className="space-y-6">
-              
-              {/* Legal Information */}
               <Card className="border-slate-200 shadow-sm">
                 <CardHeader className="flex flex-row items-center gap-4 border-b border-slate-100 bg-slate-50/50 py-4">
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-slate-600">
@@ -293,7 +337,6 @@ export default function Settings() {
                 </CardContent>
               </Card>
 
-              {/* Digital Signature */}
               <Card className="border-slate-200 shadow-sm">
                 <CardHeader className="border-b border-slate-100 bg-slate-50/50 py-4">
                   <div className="flex items-center justify-between">
@@ -391,18 +434,29 @@ export default function Settings() {
                     )}
                 </CardContent>
               </Card>
-
             </div>
           </div>
+
+          {/* MOBILE SAVE BUTTON */}
           <div className="mt-8 block sm:hidden">
-            <Button 
-              onClick={form.handleSubmit(onSubmit)} 
-              className="w-full" 
-              size="lg"
-            >
-              <Save className="mr-2 h-4 w-4" /> Save Changes
-            </Button>
+             <Button 
+                onClick={form.handleSubmit(onSubmit)} 
+                size="lg"
+                disabled={isSaving}
+                className="w-full shadow-md"
+             >
+                {isSaving ? (
+                    <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
+                    </>
+                ) : (
+                    <>
+                        <Save className="mr-2 h-4 w-4" /> Save Changes
+                    </>
+                )}
+             </Button>
           </div>
+
         </form>
       </Form>
     </div>
