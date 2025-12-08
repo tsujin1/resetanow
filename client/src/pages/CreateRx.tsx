@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { RxTemplate } from "@/components/features/rx/RxTemplate";
+import { RxTemplate } from "@/components/features/template/RxTemplate";
 
 // --- 1. SCHEMA ---
 const prescriptionSchema = z.object({

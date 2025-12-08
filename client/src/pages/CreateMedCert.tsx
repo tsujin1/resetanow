@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { MedCertTemplate } from "../components/features/rx/MedCertTemplate";
+import { MedCertTemplate } from "../components/features/template/MedCertTemplate";
 import authService from "@/services/authService"; // Import the same service
 
 // 1. Schema
