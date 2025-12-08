@@ -5,11 +5,13 @@ import type { IDoctor } from "@/types";
 // 1. Define the Context Type strictly
 interface AuthContextType {
   user: IDoctor | null;
+  setUser: React.Dispatch<React.SetStateAction<IDoctor | null>>; // Add this
   isLoading: boolean;
   isError: boolean;
   message: string;
   login: (userData: { email: string; password: string }) => Promise<void>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
 }
 
 // FIX: Silence the Fast Refresh warning for this specific export
@@ -29,6 +31,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(JSON.parse(storedUser));
     }
   }, []);
+
+  // Add this refreshUser method
+  const refreshUser = async () => {
+    try {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        const updatedUser = localStorage.getItem("user");
+        if (updatedUser) {
+          setUser(JSON.parse(updatedUser));
+        }
+      }
+    } catch (error) {
+      console.error("Failed to refresh user:", error);
+    }
+  };
 
   // Login Function
   const login = async (userData: { email: string; password: string }) => {
@@ -63,7 +80,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, isError, message, login, logout }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      setUser, // Add this to the provider value
+      isLoading, 
+      isError, 
+      message, 
+      login, 
+      logout, 
+      refreshUser 
+    }}>
       {children}
     </AuthContext.Provider>
   );

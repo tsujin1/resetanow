@@ -1,35 +1,21 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useContext } from "react"; 
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import SignatureCanvas from "react-signature-canvas";
 import authService from "@/services/authService";
-import { 
-  Save, 
-  Upload, 
-  X, 
-  Settings as SettingsIcon, 
-  Building, 
-  FileBadge, 
-  User, 
-  PenTool, 
-  Eraser,
-  Loader2
-} from "lucide-react";
+import { Save, Loader2, Settings as SettingsIcon } from "lucide-react";
+import { AuthContext } from "@/context/AuthContext"; 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Form } from "@/components/ui/form";
+import { toast } from "sonner";
 
-// --- 1. SCHEMA ---
+// Import our new sub-components
+import { ProfileCard } from "@/components/features/settings/ProfileCard";
+import { ClinicCard } from "@/components/features/settings/ClinicCard";
+import { LegalCard } from "@/components/features/settings/LegalCard";
+import { SignatureCard } from "@/components/features/settings/SignatureCard";
+
 const settingsSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   title: z.string().optional(),
@@ -46,13 +32,11 @@ type SettingsValues = z.infer<typeof settingsSchema>;
 
 export default function Settings() {
   const [signaturePreview, setSignaturePreview] = useState<string | null>(null);
-  const [signatureMode, setSignatureMode] = useState<"upload" | "draw">("draw");
-  const [, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  
   const sigCanvasRef = useRef<SignatureCanvas>(null);
+  const { user, setUser } = useContext(AuthContext)!; 
 
-  // --- 2. FORM INIT ---
+  // --- FORM INIT ---
   const form = useForm<SettingsValues>({
     resolver: zodResolver(settingsSchema),
     defaultValues: {
@@ -68,12 +52,11 @@ export default function Settings() {
     },
   });
 
-  // --- 3. FETCH PROFILE ON LOAD ---
+  // --- FETCH DATA ---
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         const data = await authService.getProfile();
-
         form.reset({
           name: data.name || "",
           title: data.title || "",
@@ -88,30 +71,15 @@ export default function Settings() {
 
         if (data.signatureUrl) {
           setSignaturePreview(data.signatureUrl);
-          setSignatureMode("upload");
         }
       } catch (error) {
         console.error("Failed to load profile", error);
-      } finally {
-        setIsLoading(false);
       }
     };
-
     fetchProfile();
   }, [form]);
 
-  // Handle File Upload
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setSignaturePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
+  // --- SIGNATURE HANDLERS ---
   const clearSignature = () => {
     sigCanvasRef.current?.clear();
     setSignaturePreview(null);
@@ -124,13 +92,14 @@ export default function Settings() {
     }
   };
 
-  // --- 4. SUBMIT UPDATE ---
+  // --- SUBMIT ---
   async function onSubmit(data: SettingsValues) {
     setIsSaving(true);
+    toast.dismiss();
+
     try {
       let finalSignature = signaturePreview;
-
-      if (signatureMode === "draw" && sigCanvasRef.current && !sigCanvasRef.current.isEmpty()) {
+      if (sigCanvasRef.current && !sigCanvasRef.current.isEmpty()) {
         finalSignature = sigCanvasRef.current.toDataURL("image/png");
       }
 
@@ -140,17 +109,45 @@ export default function Settings() {
       };
       
       const result = await authService.updateProfile(payload);
-
       setSignaturePreview(result.signatureUrl);
       
-      if (result.signatureUrl) {
-        setSignatureMode("upload");
+      if (user && setUser) {
+        setUser({
+          ...user,
+          name: data.name,
+          email: data.email,
+          title: data.title || user.title,
+          contactNumber: data.contactNumber || user.contactNumber,
+          // Add other fields that should update in sidebar
+          clinicAddress: data.clinicAddress || user.clinicAddress,
+        });
+        
+        // Also update localStorage for persistence
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) {
+          const userObj = JSON.parse(storedUser);
+          const updatedUser = {
+            ...userObj,
+            name: data.name,
+            email: data.email,
+            title: data.title || userObj.title,
+            contactNumber: data.contactNumber || userObj.contactNumber,
+            clinicAddress: data.clinicAddress || userObj.clinicAddress,
+          };
+          localStorage.setItem("user", JSON.stringify(updatedUser));
+        }
       }
+      
+      toast.success("Settings updated successfully", {
+        description: "Your profile information has been saved.",
+      });
 
-      alert("Settings saved!");
     } catch (error) {
       console.error("Failed to save settings:", error);
-      alert("Failed to save settings.");
+      
+      toast.error("Failed to save settings", {
+        description: "Please check your connection and try again.",
+      });
     } finally {
       setIsSaving(false);
     }
@@ -159,7 +156,7 @@ export default function Settings() {
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-10">
       
-      {/* HEADER ACTIONS */}
+      {/* HEADER */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
@@ -173,7 +170,6 @@ export default function Settings() {
           </div>
         </div>
         
-        {/* DESKTOP SAVE BUTTON */}
         <div className="hidden sm:block">
           <Button onClick={form.handleSubmit(onSubmit)} disabled={isSaving}>
             {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
@@ -186,275 +182,25 @@ export default function Settings() {
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            {/* LEFT COLUMN */}
+            {/* LEFT COLUMN: Profile & Clinic */}
             <div className="space-y-6 lg:col-span-2">
-              <Card className="border-slate-200 shadow-sm">
-                <CardHeader className="flex flex-row items-center gap-4 border-b border-slate-100 bg-slate-50/50 py-4">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-slate-600">
-                    <User className="h-4 w-4" />
-                  </div>
-                  <div className="grid gap-0.5">
-                    <CardTitle className="text-base font-semibold text-slate-900">Professional Profile</CardTitle>
-                    <CardDescription className="text-sm">Information appearing on your document headers</CardDescription>
-                  </div>
-                </CardHeader>
-                <CardContent className="grid gap-6 pt-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-slate-700">Full Name</FormLabel>
-                          <FormControl><Input {...field} /></FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="title"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-slate-700">Title</FormLabel>
-                            <FormControl><Input placeholder="MD" {...field} /></FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="role"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-slate-700">Specialty</FormLabel>
-                            <FormControl><Input placeholder="Physician" {...field} /></FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-slate-700">Email Address</FormLabel>
-                          <FormControl><Input {...field} disabled /></FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="contactNumber"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-slate-700">Contact Number</FormLabel>
-                          <FormControl><Input placeholder="0917-XXX-XXXX" {...field} /></FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-slate-200 shadow-sm">
-                <CardHeader className="flex flex-row items-center gap-4 border-b border-slate-100 bg-slate-50/50 py-4">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-slate-600">
-                    <Building className="h-4 w-4" />
-                  </div>
-                  <div className="grid gap-0.5">
-                    <CardTitle className="text-base font-semibold text-slate-900">Clinic Details</CardTitle>
-                    <CardDescription className="text-sm">Physical location of your practice</CardDescription>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-6">
-                  <FormField
-                    control={form.control}
-                    name="clinicAddress"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-slate-700">Address Line</FormLabel>
-                        <FormControl>
-                          <Textarea className="resize-none min-h-20" placeholder="Unit 123, Building Name, Street, City" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-              </Card>
+              <ProfileCard />
+              <ClinicCard />
             </div>
 
-            {/* RIGHT COLUMN */}
+            {/* RIGHT COLUMN: Legal & Signature */}
             <div className="space-y-6">
-              <Card className="border-slate-200 shadow-sm">
-                <CardHeader className="flex flex-row items-center gap-4 border-b border-slate-100 bg-slate-50/50 py-4">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-slate-600">
-                    <FileBadge className="h-4 w-4" />
-                  </div>
-                  <div className="grid gap-0.5">
-                    <CardTitle className="text-base font-semibold text-slate-900">Legal Info</CardTitle>
-                    <CardDescription className="text-sm">For Rx validation</CardDescription>
-                  </div>
-                </CardHeader>
-                <CardContent className="grid gap-4 pt-6">
-                  <FormField
-                    control={form.control}
-                    name="licenseNo"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-slate-700">PRC License No.</FormLabel>
-                        <FormControl><Input {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="ptrNo"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-slate-700">PTR No.</FormLabel>
-                        <FormControl><Input {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="s2No"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-slate-700">S2 No. (Optional)</FormLabel>
-                        <FormControl><Input {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-              </Card>
-
-              <Card className="border-slate-200 shadow-sm">
-                <CardHeader className="border-b border-slate-100 bg-slate-50/50 py-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-base font-semibold text-slate-900">E-Signature</CardTitle>
-                      <CardDescription className="text-sm">Draw or upload signature</CardDescription>
-                    </div>
-                    <div className="flex bg-slate-200 rounded-md p-1 gap-1">
-                      <button
-                        type="button"
-                        onClick={() => setSignatureMode("draw")}
-                        className={`p-1.5 rounded text-xs font-medium transition-all ${signatureMode === "draw" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-900"}`}
-                      >
-                        <PenTool className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setSignatureMode("upload")}
-                        className={`p-1.5 rounded text-xs font-medium transition-all ${
-                          signatureMode === "upload" 
-                            ? "bg-white text-slate-900 shadow-sm" 
-                            : "text-slate-500 hover:text-slate-900"
-                        }`}
-                      >
-                        {signaturePreview ? (
-                          <span className="flex items-center gap-1">
-                            <FileBadge className="h-4 w-4" /> View
-                          </span>
-                        ) : (
-                          <Upload className="h-4 w-4" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                </CardHeader>
-                
-                <CardContent className="pt-6">
-                  {/* DRAW MODE */}
-                  {signatureMode === "draw" && (
-                    <div className="space-y-3">
-                      <div className="border-2 border-slate-200 rounded-lg overflow-hidden bg-white">
-                        <SignatureCanvas 
-                          ref={sigCanvasRef}
-                          penColor="black"
-                          canvasProps={{
-                            width: 320, 
-                            height: 160, 
-                            className: 'signature-canvas w-full h-40 bg-white cursor-crosshair'
-                          }}
-                          onEnd={saveDrawnSignature}
-                        />
-                      </div>
-                      <div className="flex justify-between">
-                        <Button 
-                          type="button" 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={clearSignature}
-                          className="text-slate-500 hover:text-red-600"
-                        >
-                          <Eraser className="mr-2 h-4 w-4" /> Clear
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* UPLOAD MODE */}
-                  {signatureMode === "upload" && (
-                    <div className="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-lg p-6 bg-slate-50/30 hover:bg-slate-50 transition-colors w-full h-40">
-                      {signaturePreview ? (
-                        <div className="relative group w-full flex justify-center">
-                          <div className="bg-white p-2 rounded border border-gray-200">
-                            <img 
-                              src={signaturePreview} 
-                              alt="Signature" 
-                              className="h-16 object-contain"
-                            />
-                          </div>
-                          <Button 
-                            type="button" 
-                            variant="destructive" 
-                            size="icon" 
-                            className="absolute -top-3 -right-3 h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() => setSignaturePreview(null)}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <label 
-                          htmlFor="signature-upload" 
-                          className="w-full h-full cursor-pointer flex flex-col items-center justify-center space-y-2"
-                        >
-                          <div className="bg-white p-2 rounded-full border border-slate-200 shadow-sm">
-                            <Upload className="h-4 w-4 text-slate-500" />
-                          </div>
-                          <div className="text-xs text-slate-500 text-center">
-                            <span className="font-semibold text-slate-900">Click to upload</span>
-                            <br/> transparent PNG
-                          </div>
-                        </label>
-                      )}
-                      <Input 
-                        type="file" 
-                        accept="image/*" 
-                        className="hidden" 
-                        id="signature-upload"
-                        onChange={handleFileChange}
-                      />
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              <LegalCard />
+              
+              <SignatureCard 
+                signaturePreview={signaturePreview}
+                setSignaturePreview={setSignaturePreview}
+                sigCanvasRef={sigCanvasRef}
+                onClear={clearSignature}
+                onSaveDraw={saveDrawnSignature}
+              />
             </div>
+
           </div>
 
           {/* MOBILE SAVE BUTTON */}
