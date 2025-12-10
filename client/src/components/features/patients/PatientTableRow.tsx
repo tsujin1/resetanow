@@ -52,7 +52,6 @@ export default function PatientTableRow({
   };
 
   const daysSince = getDaysSinceVisit(patient.lastVisit);
-  const isRecent = daysSince <= 7;
 
   const handleDelete = async () => {
     try {
@@ -84,9 +83,6 @@ export default function PatientTableRow({
           </div>
           <div>
             <p className="font-medium text-sm text-slate-900">{patient.name}</p>
-            <p className="text-xs text-slate-500 font-mono">
-              ID: {patient._id}
-            </p>
           </div>
         </div>
       </TableCell>
@@ -114,9 +110,6 @@ export default function PatientTableRow({
                 year: "numeric",
               })}
             </span>
-            {isRecent && (
-              <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-            )}
           </div>
           <span className="text-xs text-slate-500">{daysSince} days ago</span>
         </div>
