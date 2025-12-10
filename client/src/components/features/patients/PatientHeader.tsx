@@ -1,5 +1,5 @@
 import { Users } from "lucide-react";
-import AddPatientDialog from "@/components/features/patient/AddPatientDialog";
+import AddPatientDialog from "@/components/features/patients/AddPatientDialog";
 
 interface PatientHeaderProps {
   onPatientAdded?: () => void | Promise<void>;

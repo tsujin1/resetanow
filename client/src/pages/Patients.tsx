@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import AddPatientDialog from "@/components/features/patient/AddPatientDialog";
+import AddPatientDialog from "@/components/features/patients/AddPatientDialog";
 import PatientHeader from "@/components/features/patients/PatientHeader";
 import PatientStatsCards from "@/components/features/patients/PatientStatsCards";
 import PatientSearchBar from "@/components/features/patients/PatientSearchBar";
@@ -15,29 +15,8 @@ export default function Patients() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch patients on component mount
-  useEffect(() => {
-    const fetchPatients = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const data = await patientService.getPatients();
-        setPatients(data);
-      } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : "Failed to load patients";
-        setError(errorMessage);
-        console.error("Error fetching patients:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchPatients();
-  }, []);
-
-  // Refresh patients list (can be called after adding/updating)
-  const refreshPatients = async () => {
+  // Fetch patients function
+  const fetchPatients = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -45,13 +24,37 @@ export default function Patients() {
       setPatients(data);
     } catch (err) {
       const errorMessage =
-        err instanceof Error ? err.message : "Failed to refresh patients";
+        err instanceof Error ? err.message : "Failed to load patients";
       setError(errorMessage);
-      console.error("Error refreshing patients:", err);
+      console.error("Error fetching patients:", err);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  // Fetch patients on component mount
+  useEffect(() => {
+    fetchPatients();
+  }, [fetchPatients]);
+
+  // Refetch when page becomes visible (user switches back to tab)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        fetchPatients();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [fetchPatients]);
+
+  // Refresh patients list (can be called after adding/updating/deleting)
+  const refreshPatients = useCallback(async () => {
+    await fetchPatients();
+  }, [fetchPatients]);
 
   const filteredPatients = patients.filter((p) =>
     p.name.toLowerCase().includes(searchTerm.toLowerCase()),

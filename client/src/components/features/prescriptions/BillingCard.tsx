@@ -1,4 +1,11 @@
-import { useFormContext, useWatch } from "react-hook-form";
+import { Receipt } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import {
   FormControl,
   FormField,
@@ -7,18 +14,15 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import type { Control } from "react-hook-form";
+import type { PrescriptionValues } from "@/pages/CreateRx";
 
-export function BillingCard() {
-  const { control } = useFormContext();
-  const amount = useWatch({ control, name: "amount" });
+interface BillingCardProps {
+  control: Control<PrescriptionValues>;
+  amount: number;
+}
 
+export default function BillingCard({ control, amount }: BillingCardProps) {
   return (
     <Card className="border-slate-200">
       <CardHeader className="border-b border-slate-100 bg-slate-50/50">
@@ -26,7 +30,7 @@ export function BillingCard() {
           Billing Information
         </CardTitle>
         <CardDescription className="text-sm">
-          Consultation fee details
+          Fee to appear in dashboard
         </CardDescription>
       </CardHeader>
       <CardContent className="pt-6">
@@ -35,8 +39,8 @@ export function BillingCard() {
           name="amount"
           render={({ field }) => (
             <FormItem className="space-y-2">
-              <FormLabel className="text-sm font-medium text-slate-700">
-                Consultation Fee
+              <FormLabel className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                <Receipt className="h-4 w-4" /> Professional Fee
               </FormLabel>
               <FormControl>
                 <div className="relative">
@@ -47,13 +51,8 @@ export function BillingCard() {
                     type="number"
                     placeholder="0.00"
                     {...field}
-                    // FIXED: Handle empty/NaN values safely
-                    value={field.value === 0 ? "" : field.value}
-                    onChange={(e) => {
-                      const val =
-                        e.target.value === "" ? 0 : parseFloat(e.target.value);
-                      field.onChange(val);
-                    }}
+                    value={field.value as number}
+                    onChange={(e) => field.onChange(e.target.valueAsNumber)}
                     className="h-10 pl-8"
                   />
                 </div>

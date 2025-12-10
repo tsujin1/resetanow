@@ -1,4 +1,4 @@
-import { MoreHorizontal, FilePlus, FileBadge } from "lucide-react";
+import { MoreHorizontal, FilePlus, FileBadge, Trash2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TableCell, TableRow } from "@/components/ui/table";
@@ -10,8 +10,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import patientService from "@/services/patientService";
 import type { IPatient } from "@/types";
+import { useState } from "react";
 
 interface PatientTableRowProps {
   patient: IPatient;
@@ -22,6 +33,10 @@ export default function PatientTableRow({
   patient,
   onPatientDeleted,
 }: PatientTableRowProps) {
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
+
   const getDaysSinceVisit = (lastVisit: string) => {
     const days = Math.floor(
       (new Date().getTime() - new Date(lastVisit).getTime()) /
@@ -34,15 +49,19 @@ export default function PatientTableRow({
   const isRecent = daysSince <= 7;
 
   const handleDelete = async () => {
-    if (confirm(`Are you sure you want to delete ${patient.name}?`)) {
-      try {
-        await patientService.deletePatient(patient._id);
-        await onPatientDeleted();
-      } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : "Failed to delete patient";
-        alert(errorMessage);
-      }
+    try {
+      setIsDeleting(true);
+      setDeleteError(null);
+      await patientService.deletePatient(patient._id);
+      setOpen(false);
+      await onPatientDeleted();
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to delete patient";
+      setDeleteError(errorMessage);
+      console.error("Error deleting patient:", err);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -122,12 +141,63 @@ export default function PatientTableRow({
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
-              onClick={handleDelete}
+              onSelect={(e) => {
+                e.preventDefault();
+                setOpen(true);
+              }}
             >
+              <Trash2 className="mr-2 h-3.5 w-3.5 text-red-600" />
               <span>Delete Patient</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        
+        <AlertDialog open={open} onOpenChange={setOpen}>
+          <AlertDialogContent className="sm:max-w-[425px]">
+            <AlertDialogHeader>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
+                  <AlertTriangle className="h-5 w-5 text-red-600" />
+                </div>
+                <AlertDialogTitle className="text-slate-900">
+                  Delete Patient
+                </AlertDialogTitle>
+              </div>
+              <AlertDialogDescription className="text-slate-600 pt-2">
+                Are you sure you want to delete <span className="font-semibold text-slate-900">{patient.name}</span>? This action cannot be undone and will permanently remove all patient data.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            {deleteError && (
+              <div className="rounded-md bg-red-50 border border-red-200 p-3">
+                <p className="text-sm text-red-800">{deleteError}</p>
+              </div>
+            )}
+            <AlertDialogFooter>
+              <AlertDialogCancel
+                disabled={isDeleting}
+                className="border-slate-200 text-slate-700 hover:bg-slate-50"
+              >
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="bg-red-600 text-white hover:bg-red-700 focus:ring-red-600"
+              >
+                {isDeleting ? (
+                  <>
+                    <span className="mr-2">Deleting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete Patient
+                  </>
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </TableCell>
     </TableRow>
   );

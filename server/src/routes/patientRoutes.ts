@@ -21,3 +21,5 @@ router.route("/:id")
   .delete(protect, deletePatient);
 
 export default router;
+
+

@@ -5,6 +5,7 @@ import morgan from "morgan";
 import { connectDB } from "./config/db";
 import authRoutes from "./routes/authRoutes";
 import patientRoutes from "./routes/patientRoutes";
+import prescriptionRoutes from "./routes/prescriptionRoutes";
 
 dotenv.config();
 connectDB();
@@ -20,6 +21,7 @@ app.use(morgan("dev"));
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/patients", patientRoutes);
+app.use("/api/prescriptions", prescriptionRoutes);
 
 // Default route
 app.get("/", (req, res) => {

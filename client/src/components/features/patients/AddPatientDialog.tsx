@@ -1,4 +1,3 @@
-import React from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -46,11 +45,13 @@ const formSchema = z.object({
 interface AddPatientDialogProps {
   className?: string;
   onPatientAdded?: () => void | Promise<void>;
+  onSuccess?: (message: string) => void;
 }
 
 export default function AddPatientDialog({
   className,
   onPatientAdded,
+  onSuccess,
 }: AddPatientDialogProps) {
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -83,13 +84,23 @@ export default function AddPatientDialog({
         address: data.address,
       });
 
-      // Reset form and close dialog
+      // Notify parent component to refresh patient list FIRST (before closing dialog)
+      // This ensures the data is fetched and state is updated before the dialog closes
+      if (onPatientAdded) {
+        await onPatientAdded();
+        // Wait for next animation frame to ensure React has processed the state update
+        await new Promise((resolve) =>
+          requestAnimationFrame(() => resolve(undefined)),
+        );
+      }
+
+      // Reset form and close dialog AFTER refresh completes
       form.reset();
       setOpen(false);
 
-      // Notify parent component to refresh patient list
-      if (onPatientAdded) {
-        await onPatientAdded();
+      // Notify parent component of success
+      if (onSuccess) {
+        onSuccess(`Patient "${data.name}" added successfully!`);
       }
     } catch (err) {
       const errorMessage =

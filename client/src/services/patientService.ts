@@ -21,6 +21,9 @@ const getConfig = () => {
     headers: {
       Authorization: `Bearer ${user.token}`,
       "Content-Type": "application/json",
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      Pragma: "no-cache",
+      Expires: "0",
     },
   };
 };
@@ -32,7 +35,10 @@ const getConfig = () => {
  */
 const getPatients = async (): Promise<IPatient[]> => {
   try {
-    const response = await axios.get(API_URL + "patients", getConfig());
+    const response = await axios.get(API_URL + "patients", {
+      ...getConfig(),
+      params: { _t: Date.now() }, // Cache busting query parameter
+    });
     return response.data;
   } catch (error) {
     if (error instanceof AxiosError) {
