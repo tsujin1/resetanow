@@ -1,3 +1,4 @@
+import React from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -27,8 +28,10 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 import { useState } from "react";
+import patientService from "@/services/patientService";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // 1. Schema Definition
 const formSchema = z.object({
@@ -36,16 +39,22 @@ const formSchema = z.object({
   age: z.coerce.number().min(0, "Age must be a positive number."),
   gender: z.enum(["Male", "Female"]),
   contactNumber: z.string().min(10, "Contact number is too short."),
+  address: z.string().min(5, "Address must be at least 5 characters."),
 });
 
-// ADDED: Props interface
+// Props interface
 interface AddPatientDialogProps {
   className?: string;
+  onPatientAdded?: () => void | Promise<void>;
 }
 
-// ADDED: Destructure className from props
-export default function AddPatientDialog({ className }: AddPatientDialogProps) {
+export default function AddPatientDialog({
+  className,
+  onPatientAdded,
+}: AddPatientDialogProps) {
   const [open, setOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // 2. Form Initialization
   const form = useForm({
@@ -54,15 +63,42 @@ export default function AddPatientDialog({ className }: AddPatientDialogProps) {
       name: "",
       age: 0,
       contactNumber: "",
-      gender: "Male",
+      gender: "Male" as const,
+      address: "",
     },
   });
 
   // 3. Submit Handler
-  function onSubmit(data: z.infer<typeof formSchema>) {
-    console.log("New Patient Data:", data);
-    setOpen(false);
-    form.reset();
+  async function onSubmit(data: z.infer<typeof formSchema>) {
+    try {
+      setIsSubmitting(true);
+      setError(null);
+
+      // Create patient via API
+      await patientService.createPatient({
+        name: data.name,
+        age: data.age,
+        gender: data.gender,
+        contactNumber: data.contactNumber,
+        address: data.address,
+      });
+
+      // Reset form and close dialog
+      form.reset();
+      setOpen(false);
+
+      // Notify parent component to refresh patient list
+      if (onPatientAdded) {
+        await onPatientAdded();
+      }
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to create patient";
+      setError(errorMessage);
+      console.error("Error creating patient:", err);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -80,6 +116,12 @@ export default function AddPatientDialog({ className }: AddPatientDialogProps) {
             Enter the patient details below.
           </DialogDescription>
         </DialogHeader>
+
+        {error && (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
         <Form {...form}>
           <form
@@ -165,8 +207,32 @@ export default function AddPatientDialog({ className }: AddPatientDialogProps) {
               )}
             />
 
+            {/* Address Field */}
+            <FormField
+              control={form.control}
+              name="address"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Address</FormLabel>
+                  <FormControl>
+                    <Input placeholder="123 Rizal St, Manila" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <DialogFooter>
-              <Button type="submit">Save Patient</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save Patient"
+                )}
+              </Button>
             </DialogFooter>
           </form>
         </Form>
