@@ -27,7 +27,7 @@ function App() {
           <Route path="/patients" element={<Patients />} />
           {/* Added History Route */}
           <Route path="/create-rx" element={<CreateRx />} />
-          <Route path="/med-cert" element={<CreateMedCert />} />
+          <Route path="/create-mc" element={<CreateMedCert />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
 
