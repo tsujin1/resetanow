@@ -50,3 +50,5 @@ MedCertSchema.index({ patientId: 1 });
 export const MedCert = mongoose.model("MedCert", MedCertSchema);
 
 
+
+

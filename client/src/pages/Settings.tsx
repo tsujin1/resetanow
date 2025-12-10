@@ -163,7 +163,7 @@ export default function Settings() {
             </div>
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                Clinic Settings
+                Settings
               </h1>
               <p className="text-sm text-slate-600">
                 Manage your profile, license details, and branding
