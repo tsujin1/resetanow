@@ -41,7 +41,7 @@ const SidebarContent = ({ onClose }: { onClose?: () => void }) => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-b from-slate-50 to-white">
+    <div className="flex flex-col h-full bg-linear-to-b from-slate-50 to-white">
       {/* Header */}
       <div className="p-6 border-b border-slate-200">
         <div className="flex items-center gap-2 mb-1">
@@ -74,7 +74,7 @@ const SidebarContent = ({ onClose }: { onClose?: () => void }) => {
               )
             }
           >
-            <item.icon className="h-4 w-4 flex-shrink-0" />
+            <item.icon className="h-4 w-4 shrink-0" />
             <span>{item.label}</span>
           </NavLink>
         ))}

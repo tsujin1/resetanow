@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 
 interface RxActionButtonsProps {
   onDownloadPdf: () => void;
-  onSave: () => void;
+  onSave: () => void | Promise<void>;
   isGenerating: boolean;
   isSaving: boolean;
 }
@@ -44,4 +44,3 @@ export default function RxActionButtons({
     </div>
   );
 }
-

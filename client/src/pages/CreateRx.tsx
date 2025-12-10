@@ -1,14 +1,20 @@
 import { useRef, useState, useEffect, useContext } from "react";
-import { useForm, useFieldArray, useWatch } from "react-hook-form";
+import {
+  useForm,
+  useFieldArray,
+  useWatch,
+  type SubmitHandler,
+  type Control,
+} from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form";
+import { toast } from "sonner";
 import { RxTemplate } from "@/components/features/template/RxTemplate";
 import { AuthContext } from "@/context/AuthContext";
 import patientService from "@/services/patientService";
 import prescriptionService from "@/services/prescriptionService";
 import RxHeader from "@/components/features/prescriptions/RxHeader";
-import RxAlerts from "@/components/features/prescriptions/RxAlerts";
 import PatientSelectionCard from "@/components/features/prescriptions/PatientSelectionCard";
 import MedicationsCard from "@/components/features/prescriptions/MedicationsCard";
 import RxDetailsCard from "@/components/features/prescriptions/RxDetailsCard";
@@ -46,18 +52,14 @@ export default function CreateRx() {
   const [isSaving, setIsSaving] = useState(false);
   const [patients, setPatients] = useState<IPatient[]>([]);
   const [isLoadingPatients, setIsLoadingPatients] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [saveError, setSaveError] = useState<string | null>(null);
-  const [saveSuccess, setSaveSuccess] = useState(false);
 
-  // --- 3. FORM INITIALIZATION ---
-  const form = useForm<PrescriptionValues>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(prescriptionSchema) as any,
+  const form = useForm({
+    resolver: zodResolver(prescriptionSchema),
     defaultValues: {
       date: new Date().toISOString().split("T")[0],
       diagnosis: "",
       amount: 0,
+      patientId: "",
       medications: [{ name: "", dosage: "", instructions: "", quantity: "" }],
     },
   });
@@ -72,13 +74,9 @@ export default function CreateRx() {
     const fetchPatients = async () => {
       try {
         setIsLoadingPatients(true);
-        setError(null);
         const data = await patientService.getPatients();
         setPatients(data);
       } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : "Failed to load patients";
-        setError(errorMessage);
         console.error("Error fetching patients:", err);
       } finally {
         setIsLoadingPatients(false);
@@ -130,11 +128,10 @@ export default function CreateRx() {
     }
   };
 
-  async function onSubmit(data: PrescriptionValues): Promise<void> {
+  const onSubmit: SubmitHandler<PrescriptionValues> = async (data) => {
     try {
       setIsSaving(true);
-      setSaveError(null);
-      setSaveSuccess(false);
+      toast.dismiss();
 
       await prescriptionService.createPrescription({
         patientId: data.patientId,
@@ -144,7 +141,11 @@ export default function CreateRx() {
         medications: data.medications,
       });
 
-      setSaveSuccess(true);
+      // Show success toast
+      toast.success("Prescription saved successfully", {
+        description: "The prescription has been saved to the database.",
+      });
+
       // Reset form after successful save
       form.reset({
         date: new Date().toISOString().split("T")[0],
@@ -152,23 +153,22 @@ export default function CreateRx() {
         amount: 0,
         medications: [{ name: "", dosage: "", instructions: "", quantity: "" }],
       });
-
-      // Clear success message after 3 seconds
-      setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to save prescription";
-      setSaveError(errorMessage);
       console.error("Error saving prescription:", err);
+
+      // Show error toast
+      toast.error("Failed to save prescription", {
+        description: errorMessage,
+      });
     } finally {
       setIsSaving(false);
     }
-  }
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <RxAlerts error={error} saveError={saveError} saveSuccess={saveSuccess} />
-
       <RxHeader
         onDownloadPdf={handleDownloadPdf}
         onSave={form.handleSubmit(onSubmit)}
@@ -183,16 +183,15 @@ export default function CreateRx() {
             {/* LEFT COLUMN (Patient & Meds) */}
             <div className="space-y-6 lg:col-span-2">
               <PatientSelectionCard
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                control={form.control as any}
+                control={form.control as unknown as Control<PrescriptionValues>}
                 patients={patients}
                 isLoadingPatients={isLoadingPatients}
                 selectedPatient={selectedPatient}
               />
 
               <MedicationsCard
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                control={form.control as any}
+                // Fix 2: Cast the control
+                control={form.control as unknown as Control<PrescriptionValues>}
                 fields={fields}
                 onAdd={() =>
                   append({
@@ -208,12 +207,14 @@ export default function CreateRx() {
 
             {/* RIGHT COLUMN (Rx Details & Billing) */}
             <div className="space-y-6">
-              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-              <RxDetailsCard control={form.control as any} />
+              {/* Fix 3: Cast the control */}
+              <RxDetailsCard
+                control={form.control as unknown as Control<PrescriptionValues>}
+              />
 
               <BillingCard
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                control={form.control as any}
+                // Fix 4: Cast the control
+                control={form.control as unknown as Control<PrescriptionValues>}
                 amount={Number(values.amount) || 0}
               />
             </div>

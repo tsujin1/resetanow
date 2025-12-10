@@ -74,4 +74,3 @@ export default function RxDetailsCard({ control }: RxDetailsCardProps) {
     </Card>
   );
 }
-
