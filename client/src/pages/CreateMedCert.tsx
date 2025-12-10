@@ -3,6 +3,7 @@ import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Save, FileBadge, Download } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -29,7 +30,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { MedCertTemplate } from "../components/features/template/MedCertTemplate";
 import { AuthContext } from "@/context/AuthContext";
 import patientService from "@/services/patientService";
@@ -56,8 +57,6 @@ export default function CreateMedCert() {
   const [patients, setPatients] = useState<IPatient[]>([]);
   const [isLoadingPatients, setIsLoadingPatients] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [saveError, setSaveError] = useState<string | null>(null);
-  const [saveSuccess, setSaveSuccess] = useState(false);
 
   const form = useForm({
     resolver: zodResolver(medCertSchema),
@@ -84,8 +83,10 @@ export default function CreateMedCert() {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to load patients";
-      setError(errorMessage);
       console.error("Error fetching patients:", err);
+      toast.error("Failed to load patients", {
+        description: errorMessage,
+      });
     } finally {
       setIsLoadingPatients(false);
     }
@@ -157,8 +158,7 @@ export default function CreateMedCert() {
   async function onSubmit(data: MedCertValues): Promise<void> {
     try {
       setIsSaving(true);
-      setSaveError(null);
-      setSaveSuccess(false);
+      toast.dismiss();
 
       await medCertService.createMedCert({
         patientId: data.patientId,
@@ -169,7 +169,11 @@ export default function CreateMedCert() {
         amount: data.amount,
       });
 
-      setSaveSuccess(true);
+      // Show success toast
+      toast.success("Medical certificate saved", {
+        description: "The medical certificate was successfully saved.",
+      });
+
       // Reset form after successful save
       form.reset({
         date: new Date().toISOString().split("T")[0],
@@ -179,16 +183,16 @@ export default function CreateMedCert() {
         amount: 0,
         patientId: "",
       });
-
-      // Clear success message after 3 seconds
-      setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
       const errorMessage =
         err instanceof Error
           ? err.message
           : "Failed to save medical certificate";
-      setSaveError(errorMessage);
       console.error("Error saving medical certificate:", err);
+      // Show error toast
+      toast.error("Failed to save medical certificate", {
+        description: errorMessage,
+      });
     } finally {
       setIsSaving(false);
     }
@@ -196,25 +200,11 @@ export default function CreateMedCert() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      {/* Error and Success Alerts */}
+      {/* Error Alert (only for non-form related errors) */}
       {error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-      {saveError && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{saveError}</AlertDescription>
-        </Alert>
-      )}
-      {saveSuccess && (
-        <Alert className="border-green-200 bg-green-50">
-          <CheckCircle2 className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-800">
-            Medical certificate saved successfully!
-          </AlertDescription>
         </Alert>
       )}
       <div className="no-print">

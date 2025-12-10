@@ -142,8 +142,8 @@ export default function CreateRx() {
       });
 
       // Show success toast
-      toast.success("Prescription saved successfully", {
-        description: "The prescription has been saved to the database.",
+      toast.success("Prescription saved", {
+        description: "The prescription was successfully saved.",
       });
 
       // Reset form after successful save
