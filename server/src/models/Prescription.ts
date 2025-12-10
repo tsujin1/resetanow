@@ -71,3 +71,4 @@ PrescriptionSchema.index({ patientId: 1 });
 export const Prescription = mongoose.model("Prescription", PrescriptionSchema);
 
 
+

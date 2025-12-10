@@ -1,4 +1,10 @@
-import { MoreHorizontal, FilePlus, FileBadge, Trash2, AlertTriangle } from "lucide-react";
+import {
+  MoreHorizontal,
+  FilePlus,
+  FileBadge,
+  Trash2,
+  AlertTriangle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TableCell, TableRow } from "@/components/ui/table";
@@ -151,7 +157,7 @@ export default function PatientTableRow({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        
+
         <AlertDialog open={open} onOpenChange={setOpen}>
           <AlertDialogContent className="sm:max-w-[425px]">
             <AlertDialogHeader>
@@ -164,7 +170,12 @@ export default function PatientTableRow({
                 </AlertDialogTitle>
               </div>
               <AlertDialogDescription className="text-slate-600 pt-2">
-                Are you sure you want to delete <span className="font-semibold text-slate-900">{patient.name}</span>? This action cannot be undone and will permanently remove all patient data.
+                Are you sure you want to delete{" "}
+                <span className="font-semibold text-slate-900">
+                  {patient.name}
+                </span>
+                ? This action cannot be undone and will permanently remove all
+                patient data.
               </AlertDialogDescription>
             </AlertDialogHeader>
             {deleteError && (

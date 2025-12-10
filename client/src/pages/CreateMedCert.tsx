@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useContext, useCallback } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -28,8 +28,13 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { MedCertTemplate } from "../components/features/template/MedCertTemplate";
-import authService from "@/services/authService"; // Import the same service
+import { AuthContext } from "@/context/AuthContext";
+import patientService from "@/services/patientService";
+import medCertService from "@/services/medCertService";
+import type { IPatient } from "@/types";
 
 // 1. Schema
 const medCertSchema = z.object({
@@ -43,58 +48,16 @@ const medCertSchema = z.object({
 
 type MedCertValues = z.infer<typeof medCertSchema>;
 
-const dummyPatients = [
-  {
-    id: "1",
-    name: "Jimuel Ronald Dimaandal",
-    age: 21,
-    sex: "Male",
-    address: "Dr. Pilapit Street, Pasig City",
-  },
-  {
-    id: "2",
-    name: "Maria Clara",
-    age: 28,
-    sex: "Female",
-    address: "456 Mabini Ave, Quezon City",
-  },
-  {
-    id: "3",
-    name: "Jose Rizal",
-    age: 32,
-    sex: "Male",
-    address: "789 Kalaw Dr, Laguna",
-  },
-];
-
-// Define the doctor type based on your database
-interface DoctorData {
-  name: string;
-  title: string;
-  role?: string;
-  contactNumber: string;
-  email: string;
-  licenseNo: string;
-  ptrNo: string;
-  s2No?: string;
-  signatureUrl?: string | null;
-  clinicAddress?: string;
-}
-
 export default function CreateMedCert() {
   const componentRef = useRef<HTMLDivElement>(null);
+  const { user } = useContext(AuthContext) || {};
   const [isGenerating, setIsGenerating] = useState(false);
-  const [doctorData, setDoctorData] = useState<DoctorData>({
-    name: "",
-    title: "",
-    role: "",
-    contactNumber: "",
-    email: "",
-    licenseNo: "",
-    ptrNo: "",
-    signatureUrl: null,
-  });
-  const [isLoadingDoctor, setIsLoadingDoctor] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [patients, setPatients] = useState<IPatient[]>([]);
+  const [isLoadingPatients, setIsLoadingPatients] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   const form = useForm({
     resolver: zodResolver(medCertSchema),
@@ -109,47 +72,42 @@ export default function CreateMedCert() {
   });
 
   const values = useWatch({ control: form.control });
-  const selectedPatient = dummyPatients.find((p) => p.id === values.patientId);
+  const selectedPatient = patients.find((p) => p._id === values.patientId);
 
-  // Fetch doctor data from the same source as Settings page
+  // Fetch patients on component mount
+  const fetchPatients = useCallback(async () => {
+    try {
+      setIsLoadingPatients(true);
+      setError(null);
+      const data = await patientService.getPatients();
+      setPatients(data);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to load patients";
+      setError(errorMessage);
+      console.error("Error fetching patients:", err);
+    } finally {
+      setIsLoadingPatients(false);
+    }
+  }, []);
+
   useEffect(() => {
-    const fetchDoctorData = async () => {
-      try {
-        setIsLoadingDoctor(true);
-        const data = await authService.getProfile(); // Use the same service
+    fetchPatients();
+  }, [fetchPatients]);
 
-        setDoctorData({
-          name: data.name || "",
-          title: data.title || "",
-          role: data.role || "",
-          contactNumber: data.contactNumber || "",
-          email: data.email || "",
-          licenseNo: data.licenseNo || "",
-          ptrNo: data.ptrNo || "",
-          s2No: data.s2No || "",
-          signatureUrl: data.signatureUrl || null,
-          clinicAddress: data.clinicAddress || "",
-        });
-      } catch (error) {
-        console.error("Failed to load doctor profile:", error);
-        // Set fallback values if needed
-        setDoctorData({
-          name: "Full stack Developer",
-          title: "RMT, MD",
-          role: "General Physician",
-          contactNumber: "0917-123-4567",
-          email: "justinricher@gmail.com",
-          licenseNo: "123",
-          ptrNo: "456",
-          signatureUrl: null,
-        });
-      } finally {
-        setIsLoadingDoctor(false);
+  // Refetch when page becomes visible (user switches back to tab)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        fetchPatients();
       }
     };
 
-    fetchDoctorData();
-  }, []);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [fetchPatients]);
 
   const handleDownloadPdf = async () => {
     const element = componentRef.current;
@@ -196,12 +154,69 @@ export default function CreateMedCert() {
     }
   };
 
-  function onSubmit(data: MedCertValues) {
-    console.log("Saving Med Cert...", data);
+  async function onSubmit(data: MedCertValues): Promise<void> {
+    try {
+      setIsSaving(true);
+      setSaveError(null);
+      setSaveSuccess(false);
+
+      await medCertService.createMedCert({
+        patientId: data.patientId,
+        date: data.date,
+        reason: data.reason,
+        diagnosis: data.diagnosis,
+        recommendation: data.recommendation,
+        amount: data.amount,
+      });
+
+      setSaveSuccess(true);
+      // Reset form after successful save
+      form.reset({
+        date: new Date().toISOString().split("T")[0],
+        reason: "",
+        diagnosis: "",
+        recommendation: "",
+        amount: 0,
+        patientId: "",
+      });
+
+      // Clear success message after 3 seconds
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Failed to save medical certificate";
+      setSaveError(errorMessage);
+      console.error("Error saving medical certificate:", err);
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
+      {/* Error and Success Alerts */}
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      {saveError && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{saveError}</AlertDescription>
+        </Alert>
+      )}
+      {saveSuccess && (
+        <Alert className="border-green-200 bg-green-50">
+          <CheckCircle2 className="h-4 w-4 text-green-600" />
+          <AlertDescription className="text-green-800">
+            Medical certificate saved successfully!
+          </AlertDescription>
+        </Alert>
+      )}
       <div className="no-print">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
@@ -224,7 +239,7 @@ export default function CreateMedCert() {
             <Button
               variant="outline"
               onClick={handleDownloadPdf}
-              disabled={isGenerating || isLoadingDoctor || !selectedPatient}
+              disabled={isGenerating || isLoadingPatients || !selectedPatient}
             >
               {isGenerating ? (
                 <span className="animate-pulse">Generating...</span>
@@ -234,8 +249,16 @@ export default function CreateMedCert() {
                 </>
               )}
             </Button>
-            <Button onClick={form.handleSubmit(onSubmit)}>
-              <Save className="mr-2 h-4 w-4" /> Save Record
+            <Button onClick={form.handleSubmit(onSubmit)} disabled={isSaving}>
+              {isSaving ? (
+                <>
+                  <span className="animate-pulse">Saving...</span>
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" /> Save Record
+                </>
+              )}
             </Button>
           </div>
         </div>
@@ -275,22 +298,32 @@ export default function CreateMedCert() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {dummyPatients.map((p) => (
-                                <SelectItem
-                                  key={p.id}
-                                  value={p.id}
-                                  className="cursor-pointer"
-                                >
-                                  <div className="flex flex-col">
-                                    <span className="font-medium">
-                                      {p.name}
-                                    </span>
-                                    <span className="text-xs text-slate-500 text-left">
-                                      {p.age} yrs • {p.sex}
-                                    </span>
-                                  </div>
+                              {isLoadingPatients ? (
+                                <SelectItem value="loading" disabled>
+                                  Loading patients...
                                 </SelectItem>
-                              ))}
+                              ) : patients.length === 0 ? (
+                                <SelectItem value="no-patients" disabled>
+                                  No patients found
+                                </SelectItem>
+                              ) : (
+                                patients.map((p) => (
+                                  <SelectItem
+                                    key={p._id}
+                                    value={p._id}
+                                    className="cursor-pointer"
+                                  >
+                                    <div className="flex flex-col">
+                                      <span className="font-medium">
+                                        {p.name}
+                                      </span>
+                                      <span className="text-xs text-slate-500 text-left">
+                                        {p.age} yrs • {p.gender}
+                                      </span>
+                                    </div>
+                                  </SelectItem>
+                                ))
+                              )}
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -327,10 +360,10 @@ export default function CreateMedCert() {
                         </div>
                         <div>
                           <span className="font-medium text-slate-700">
-                            Sex:
+                            Gender:
                           </span>
                           <span className="ml-2 text-slate-600">
-                            {selectedPatient.sex}
+                            {selectedPatient.gender}
                           </span>
                         </div>
                         <div className="sm:col-span-2">
@@ -479,62 +512,6 @@ export default function CreateMedCert() {
                   </div>
                 </CardContent>
               </Card>
-
-              {/* Doctor Info Preview (Optional) */}
-              {!isLoadingDoctor && (
-                <Card className="border-slate-200">
-                  <CardHeader className="border-b border-slate-100 bg-slate-50/50">
-                    <CardTitle className="text-base font-semibold text-slate-900">
-                      Doctor Information
-                    </CardTitle>
-                    <CardDescription className="text-sm">
-                      This will appear on the certificate
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="pt-6">
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-slate-600">Name:</span>
-                        <span className="font-medium text-slate-900">
-                          {doctorData.name}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-600">Title:</span>
-                        <span className="font-medium text-slate-900">
-                          {doctorData.title}
-                        </span>
-                      </div>
-                      {doctorData.role && (
-                        <div className="flex justify-between">
-                          <span className="text-slate-600">Specialty:</span>
-                          <span className="font-medium text-slate-900">
-                            {doctorData.role}
-                          </span>
-                        </div>
-                      )}
-                      <div className="flex justify-between">
-                        <span className="text-slate-600">Contact:</span>
-                        <span className="font-medium text-slate-900">
-                          {doctorData.contactNumber}
-                        </span>
-                      </div>
-                      {doctorData.signatureUrl && (
-                        <div className="mt-3 pt-3 border-t border-slate-200">
-                          <span className="text-slate-600">Signature:</span>
-                          <div className="mt-2 flex justify-center">
-                            <img
-                              src={doctorData.signatureUrl}
-                              alt="Signature"
-                              className="h-12 object-contain"
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
             </div>
           </div>
         </Form>
@@ -543,7 +520,7 @@ export default function CreateMedCert() {
           <Button
             variant="outline"
             onClick={handleDownloadPdf}
-            disabled={isGenerating || isLoadingDoctor || !selectedPatient}
+            disabled={isGenerating || isLoadingPatients || !selectedPatient}
             className="w-full"
           >
             {isGenerating ? (
@@ -558,8 +535,15 @@ export default function CreateMedCert() {
             onClick={form.handleSubmit(onSubmit)}
             className="w-full"
             size="lg"
+            disabled={isSaving}
           >
-            <Save className="mr-2 h-4 w-4" /> Save Record
+            {isSaving ? (
+              <span className="animate-pulse">Saving...</span>
+            ) : (
+              <>
+                <Save className="mr-2 h-4 w-4" /> Save Record
+              </>
+            )}
           </Button>
         </div>
       </div>{" "}
@@ -573,13 +557,13 @@ export default function CreateMedCert() {
           backgroundColor: "#ffffff",
         }}
       >
-        {!isLoadingDoctor && (
+        {!isLoadingPatients && (
           <MedCertTemplate
             ref={componentRef}
             data={{
               patientName: selectedPatient?.name,
               age: selectedPatient?.age,
-              sex: selectedPatient?.sex,
+              sex: selectedPatient?.gender,
               address: selectedPatient?.address,
               date: values.date || "",
               reason: values.reason || "",
@@ -587,14 +571,14 @@ export default function CreateMedCert() {
               recommendation: values.recommendation || "",
             }}
             doctor={{
-              name: doctorData.name,
-              title: doctorData.title,
-              specialty: doctorData.role || "General Physician",
-              contactNumber: doctorData.contactNumber,
-              email: doctorData.email,
-              licenseNo: doctorData.licenseNo,
-              ptrNo: doctorData.ptrNo,
-              signatureUrl: doctorData.signatureUrl,
+              name: user?.name || "",
+              title: user?.title || "",
+              specialty: user?.role || "General Physician",
+              contactNumber: user?.contactNumber || "",
+              email: user?.email || "",
+              licenseNo: user?.licenseNo || "",
+              ptrNo: user?.ptrNo || "",
+              signatureUrl: user?.signatureUrl || null,
             }}
           />
         )}
