@@ -30,4 +30,3 @@ export default function PatientAlerts({ error, success }: PatientAlertsProps) {
     </>
   );
 }
-

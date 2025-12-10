@@ -1,4 +1,4 @@
-import { LayoutDashboard, Calendar, Download } from "lucide-react";
+import { LayoutDashboard, Calendar, Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useDashboardData } from "@/components/features/dashboard/useDashboardData";
 import { DashboardMetricsCards } from "@/components/features/dashboard/DashboardMetrics";
@@ -11,6 +11,7 @@ import {
 export default function Dashboard() {
   const {
     isLoading,
+    isExporting,
     metrics,
     weeklyData,
     revenueSource,
@@ -40,8 +41,21 @@ export default function Dashboard() {
           <Button variant="outline">
             <Calendar className="mr-2 h-4 w-4" /> Last 30 Days
           </Button>
-          <Button onClick={exportCSV} disabled={isLoading}>
-            <Download className="mr-2 h-4 w-4" /> Export Report
+          <Button
+            onClick={exportCSV}
+            disabled={isLoading || isExporting}
+            className="relative"
+          >
+            {isExporting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Exporting...
+              </>
+            ) : (
+              <>
+                <Download className="mr-2 h-4 w-4" /> Export Report
+              </>
+            )}
           </Button>
         </div>
       </div>

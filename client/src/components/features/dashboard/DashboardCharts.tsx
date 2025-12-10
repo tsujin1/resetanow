@@ -1,3 +1,4 @@
+import { memo } from "react";
 import {
   BarChart,
   Bar,
@@ -22,7 +23,7 @@ import {
 import type { WeeklyData, SourceData, MonthlyData } from "./types";
 import { TrendingUp, ArrowUpRight } from "lucide-react";
 
-export const WeeklyAnalysisChart = ({ data }: { data: WeeklyData[] }) => (
+export const WeeklyAnalysisChart = memo(({ data }: { data: WeeklyData[] }) => (
   <Card className="col-span-4 border-slate-200 shadow-sm">
     <CardHeader>
       <CardTitle>Weekly Analysis</CardTitle>
@@ -46,17 +47,24 @@ export const WeeklyAnalysisChart = ({ data }: { data: WeeklyData[] }) => (
               tickFormatter={(val) => `₱${val}`}
             />
             <Tooltip cursor={{ fill: "transparent" }} />
-            <Bar dataKey="prescription" stackId="a" fill="#0f172a" />
+            <Bar
+              dataKey="prescription"
+              stackId="a"
+              fill="#0f172a"
+              animationDuration={600}
+              animationEasing="ease-out"
+            />
             <Bar
               dataKey="medCert"
               stackId="a"
               fill="#64748b"
               radius={[4, 4, 0, 0]}
+              animationDuration={600}
+              animationEasing="ease-out"
             />
           </BarChart>
         </ResponsiveContainer>
       </div>
-      {/* LEGEND ADDED HERE */}
       <div className="flex items-center justify-center gap-4 pt-4 text-xs text-slate-600">
         <div className="flex items-center gap-2">
           <div className="h-3 w-3 rounded bg-[#0f172a]" />
@@ -69,59 +77,69 @@ export const WeeklyAnalysisChart = ({ data }: { data: WeeklyData[] }) => (
       </div>
     </CardContent>
   </Card>
-);
+));
 
-export const RevenueSourceChart = ({
-  data,
-  total,
-}: {
-  data: SourceData[];
-  total: number;
-}) => (
-  <Card className="col-span-4 lg:col-span-3">
-    <CardHeader>
-      <CardTitle>Revenue Sources</CardTitle>
-    </CardHeader>
-    <CardContent>
-      <div className="h-[300px] relative">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={data}
-              innerRadius={80}
-              outerRadius={100}
-              paddingAngle={2}
-              dataKey="value"
-            >
-              {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
-              ))}
-            </Pie>
-            <Tooltip />
-          </PieChart>
-        </ResponsiveContainer>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
-          <p className="text-xs text-muted-foreground">Total</p>
-          <p className="text-xl font-bold">₱{total.toLocaleString()}</p>
-        </div>
-      </div>
-      {/* LEGEND ADDED HERE */}
-      <div className="flex items-center justify-center gap-4 pt-4 text-xs text-slate-600">
-        {data.map((item, index) => (
-          <div key={index} className="flex items-center gap-2">
-            <div
-              className="h-3 w-3 rounded-full"
-              style={{ backgroundColor: item.color }}
-            />
-            <span>{item.name}</span>
+WeeklyAnalysisChart.displayName = "WeeklyAnalysisChart";
+
+export const RevenueSourceChart = memo(
+  ({ data, total }: { data: SourceData[]; total: number }) => {
+    // Transform data to match Recharts expected format
+    const chartData = data.map((item) => ({
+      name: item.name,
+      value: item.value,
+      color: item.color,
+    }));
+
+    return (
+      <Card className="col-span-4 lg:col-span-3">
+        <CardHeader>
+          <CardTitle>Revenue Sources</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[300px] relative">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={chartData}
+                  innerRadius={80}
+                  outerRadius={100}
+                  paddingAngle={2}
+                  dataKey="value"
+                  animationDuration={800}
+                  animationEasing="ease-out"
+                >
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
+              <p className="text-xs text-muted-foreground">Total</p>
+              <p className="text-xl font-bold">₱{total.toLocaleString()}</p>
+            </div>
           </div>
-        ))}
-      </div>
-    </CardContent>
-  </Card>
+          <div className="flex items-center justify-center gap-4 pt-4 text-xs text-slate-600">
+            {data.map((item, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <div
+                  className="h-3 w-3 rounded-full"
+                  style={{ backgroundColor: item.color }}
+                />
+                <span>{item.name}</span>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  },
 );
 
-export const MonthlyGrowthChart = ({ data }: { data: MonthlyData[] }) => {
+RevenueSourceChart.displayName = "RevenueSourceChart";
+
+export const MonthlyGrowthChart = memo(({ data }: { data: MonthlyData[] }) => {
   const current = data[data.length - 1]?.revenue || 0;
   const prev = data[data.length - 2]?.revenue || 0;
   const diff = current - prev;
@@ -189,6 +207,8 @@ export const MonthlyGrowthChart = ({ data }: { data: MonthlyData[] }) => {
                 stroke="#0f172a"
                 fillOpacity={1}
                 fill="url(#colorRev)"
+                animationDuration={1000}
+                animationEasing="ease-in-out"
               />
             </AreaChart>
           </ResponsiveContainer>
@@ -196,4 +216,6 @@ export const MonthlyGrowthChart = ({ data }: { data: MonthlyData[] }) => {
       </CardContent>
     </Card>
   );
-};
+});
+
+MonthlyGrowthChart.displayName = "MonthlyGrowthChart";
