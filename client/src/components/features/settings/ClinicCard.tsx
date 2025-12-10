@@ -8,7 +8,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 
 export function ClinicCard() {
   const { control } = useFormContext();
@@ -20,8 +26,12 @@ export function ClinicCard() {
           <Building className="h-4 w-4" />
         </div>
         <div className="grid gap-0.5">
-          <CardTitle className="text-base font-semibold text-slate-900">Clinic Details</CardTitle>
-          <CardDescription className="text-sm">Physical location of your practice</CardDescription>
+          <CardTitle className="text-base font-semibold text-slate-900">
+            Clinic Details
+          </CardTitle>
+          <CardDescription className="text-sm">
+            Physical location of your practice
+          </CardDescription>
         </div>
       </CardHeader>
       <CardContent className="pt-6">
@@ -32,7 +42,11 @@ export function ClinicCard() {
             <FormItem>
               <FormLabel className="text-slate-700">Address Line</FormLabel>
               <FormControl>
-                <Textarea className="resize-none min-h-20" placeholder="Unit 123, Building Name, Street, City" {...field} />
+                <Textarea
+                  className="resize-none min-h-20"
+                  placeholder="Unit 123, Building Name, Street, City"
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

@@ -3,14 +3,14 @@
 export interface IDoctor {
   _id?: string; // Optional because it might not exist before first save
   name: string;
-  title: string;       // e.g. "MD, RMT"
-  role: string;        // e.g. "General Physician" (Mapped to 'specialty' in UI)
+  title: string; // e.g. "MD, RMT"
+  role: string; // e.g. "General Physician" (Mapped to 'specialty' in UI)
   email: string;
   contactNumber: string;
   clinicAddress: string;
   licenseNo: string;
   ptrNo: string;
-  s2No?: string;       // Optional
+  s2No?: string; // Optional
   signatureUrl?: string | null;
 }
 
@@ -21,9 +21,9 @@ export interface IPatient {
   name: string;
   age: number;
   gender: "Male" | "Female";
-  address: string;     // Added this (needed for Rx/MedCert templates)
+  address: string; // Added this (needed for Rx/MedCert templates)
   contactNumber: string;
-  lastVisit: string;   // ISO Date string
+  lastVisit: string; // ISO Date string
 }
 
 // --- 3. PRESCRIPTIONS ---
@@ -33,12 +33,12 @@ export interface IPrescription {
   patientId: string | IPatient; // Can be ID or populated object
   date: string;
   diagnosis?: string;
-  amount: number;      // For billing dashboard
+  amount: number; // For billing dashboard
   medications: {
     name: string;
-    dosage: string;    // Added (e.g. "500mg")
+    dosage: string; // Added (e.g. "500mg")
     instructions: string; // (e.g. "1 tab BID")
-    quantity: string;  // (e.g. "#30")
+    quantity: string; // (e.g. "#30")
   }[];
   createdAt?: string;
 }
@@ -52,7 +52,7 @@ export interface IMedCert {
   reason: string;
   diagnosis: string;
   recommendation: string;
-  amount: number;      // For billing dashboard
+  amount: number; // For billing dashboard
   createdAt?: string;
 }
 

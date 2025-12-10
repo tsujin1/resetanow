@@ -1,4 +1,4 @@
-declare module '*.otf' {
+declare module "*.otf" {
   const value: string;
   export default value;
 }

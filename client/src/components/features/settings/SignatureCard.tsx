@@ -3,7 +3,13 @@ import SignatureCanvas from "react-signature-canvas";
 import { Upload, X, PenTool, Eraser, FileBadge } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 
 interface SignatureCardProps {
   signaturePreview: string | null;
@@ -14,12 +20,12 @@ interface SignatureCardProps {
   onSaveDraw: () => void;
 }
 
-export function SignatureCard({ 
-  signaturePreview, 
-  setSignaturePreview, 
+export function SignatureCard({
+  signaturePreview,
+  setSignaturePreview,
   sigCanvasRef,
   onClear,
-  onSaveDraw
+  onSaveDraw,
 }: SignatureCardProps) {
   const [mode, setMode] = useState<"upload" | "draw">("draw");
 
@@ -40,8 +46,12 @@ export function SignatureCard({
       <CardHeader className="border-b border-slate-100 bg-slate-50/50 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-base font-semibold text-slate-900">E-Signature</CardTitle>
-            <CardDescription className="text-sm">Draw or upload signature</CardDescription>
+            <CardTitle className="text-base font-semibold text-slate-900">
+              E-Signature
+            </CardTitle>
+            <CardDescription className="text-sm">
+              Draw or upload signature
+            </CardDescription>
           </div>
           <div className="flex bg-slate-200 rounded-md p-1 gap-1">
             <button
@@ -57,7 +67,9 @@ export function SignatureCard({
               className={`p-1.5 rounded text-xs font-medium transition-all ${mode === "upload" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-900"}`}
             >
               {signaturePreview ? (
-                <span className="flex items-center gap-1"><FileBadge className="h-4 w-4" /> View</span>
+                <span className="flex items-center gap-1">
+                  <FileBadge className="h-4 w-4" /> View
+                </span>
               ) : (
                 <Upload className="h-4 w-4" />
               )}
@@ -65,28 +77,29 @@ export function SignatureCard({
           </div>
         </div>
       </CardHeader>
-      
+
       <CardContent className="pt-6">
         {/* DRAW MODE */}
         {mode === "draw" && (
           <div className="space-y-3">
             <div className="border-2 border-slate-200 rounded-lg overflow-hidden bg-white">
-              <SignatureCanvas 
+              <SignatureCanvas
                 ref={sigCanvasRef}
                 penColor="black"
                 canvasProps={{
-                  width: 320, 
-                  height: 160, 
-                  className: 'signature-canvas w-full h-40 bg-white cursor-crosshair'
+                  width: 320,
+                  height: 160,
+                  className:
+                    "signature-canvas w-full h-40 bg-white cursor-crosshair",
                 }}
                 onEnd={onSaveDraw}
               />
             </div>
             <div className="flex justify-between">
-              <Button 
-                type="button" 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
                 onClick={onClear}
                 className="text-slate-500 hover:text-red-600"
               >
@@ -102,16 +115,16 @@ export function SignatureCard({
             {signaturePreview ? (
               <div className="relative group w-full flex justify-center">
                 <div className="bg-white p-2 rounded border border-gray-200">
-                  <img 
-                    src={signaturePreview} 
-                    alt="Signature" 
+                  <img
+                    src={signaturePreview}
+                    alt="Signature"
                     className="h-16 object-contain"
                   />
                 </div>
-                <Button 
-                  type="button" 
-                  variant="destructive" 
-                  size="icon" 
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
                   className="absolute -top-3 -right-3 h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                   onClick={() => setSignaturePreview(null)}
                 >
@@ -119,23 +132,25 @@ export function SignatureCard({
                 </Button>
               </div>
             ) : (
-              <label 
-                htmlFor="signature-upload" 
+              <label
+                htmlFor="signature-upload"
                 className="w-full h-full cursor-pointer flex flex-col items-center justify-center space-y-2"
               >
                 <div className="bg-white p-2 rounded-full border border-slate-200 shadow-sm">
                   <Upload className="h-4 w-4 text-slate-500" />
                 </div>
                 <div className="text-xs text-slate-500 text-center">
-                  <span className="font-semibold text-slate-900">Click to upload</span>
-                  <br/> transparent PNG
+                  <span className="font-semibold text-slate-900">
+                    Click to upload
+                  </span>
+                  <br /> transparent PNG
                 </div>
               </label>
             )}
-            <Input 
-              type="file" 
-              accept="image/*" 
-              className="hidden" 
+            <Input
+              type="file"
+              accept="image/*"
+              className="hidden"
               id="signature-upload"
               onChange={handleFileChange}
             />

@@ -8,7 +8,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 
 export function LegalCard() {
   const { control } = useFormContext();
@@ -20,8 +26,12 @@ export function LegalCard() {
           <FileBadge className="h-4 w-4" />
         </div>
         <div className="grid gap-0.5">
-          <CardTitle className="text-base font-semibold text-slate-900">Legal Info</CardTitle>
-          <CardDescription className="text-sm">For Rx validation</CardDescription>
+          <CardTitle className="text-base font-semibold text-slate-900">
+            Legal Info
+          </CardTitle>
+          <CardDescription className="text-sm">
+            For Rx validation
+          </CardDescription>
         </div>
       </CardHeader>
       <CardContent className="grid gap-4 pt-6">
@@ -31,7 +41,9 @@ export function LegalCard() {
           render={({ field }) => (
             <FormItem>
               <FormLabel className="text-slate-700">PRC License No.</FormLabel>
-              <FormControl><Input {...field} /></FormControl>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -42,7 +54,9 @@ export function LegalCard() {
           render={({ field }) => (
             <FormItem>
               <FormLabel className="text-slate-700">PTR No.</FormLabel>
-              <FormControl><Input {...field} /></FormControl>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -52,8 +66,12 @@ export function LegalCard() {
           name="s2No"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-slate-700">S2 No. (Optional)</FormLabel>
-              <FormControl><Input {...field} /></FormControl>
+              <FormLabel className="text-slate-700">
+                S2 No. (Optional)
+              </FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}

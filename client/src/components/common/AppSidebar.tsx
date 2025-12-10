@@ -1,10 +1,25 @@
 import { useContext, useState } from "react";
-import { LayoutDashboard, Users, Settings, LogOut, Pill, FileBadge, Activity, Menu } from "lucide-react";
+import {
+  LayoutDashboard,
+  Users,
+  Settings,
+  LogOut,
+  Pill,
+  FileBadge,
+  Activity,
+  Menu,
+} from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { AuthContext } from "@/context/AuthContext";
-import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet"; // Import Sheet
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet"; // Import Sheet
 
 const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -33,7 +48,9 @@ const SidebarContent = ({ onClose }: { onClose?: () => void }) => {
           <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center">
             <Activity className="h-4 w-4 text-white" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">ResetaNow</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            ResetaNow
+          </h1>
         </div>
         <p className="text-xs text-slate-500 ml-10">Clinical Workflow System</p>
       </div>
@@ -53,7 +70,7 @@ const SidebarContent = ({ onClose }: { onClose?: () => void }) => {
                 "flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 group",
                 isActive
                   ? "bg-slate-900 text-white shadow-md"
-                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 hover:translate-x-0.5"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 hover:translate-x-0.5",
               )
             }
           >
@@ -108,14 +125,18 @@ export function MobileSidebar() {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="md:hidden m-2 text-slate-700">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="md:hidden m-2 text-slate-700"
+        >
           <Menu className="h-6 w-6" />
           <span className="sr-only">Toggle menu</span>
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="p-0 w-72">
         <SheetHeader className="sr-only">
-            <SheetTitle>Navigation Menu</SheetTitle>
+          <SheetTitle>Navigation Menu</SheetTitle>
         </SheetHeader>
         <SidebarContent onClose={() => setOpen(false)} />
       </SheetContent>

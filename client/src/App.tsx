@@ -36,9 +36,12 @@ function App() {
       </Routes>
 
       {/* Toaster placed here to be accessible globally */}
-      <Toaster position="top-right" richColors={false} // ← Disable richColors to use custom styles
+      <Toaster
+        position="top-right"
+        richColors={false} // ← Disable richColors to use custom styles
         toastOptions={{
-          className: "border-slate-200 bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-50 dark:border-slate-700",
+          className:
+            "border-slate-200 bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-50 dark:border-slate-700",
         }}
       />
     </>

@@ -1,11 +1,11 @@
-import { useState, useRef, useEffect, useContext } from "react"; 
+import { useState, useRef, useEffect, useContext } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import SignatureCanvas from "react-signature-canvas";
 import authService from "@/services/authService";
 import { Save, Loader2, Settings as SettingsIcon } from "lucide-react";
-import { AuthContext } from "@/context/AuthContext"; 
+import { AuthContext } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { toast } from "sonner";
@@ -23,7 +23,7 @@ const settingsSchema = z.object({
   email: z.string().email("Please enter a valid email."),
   contactNumber: z.string().optional(),
   clinicAddress: z.string().optional(),
-  licenseNo: z.string().min(1, "License number is required.").or(z.literal("")), 
+  licenseNo: z.string().min(1, "License number is required.").or(z.literal("")),
   ptrNo: z.string().optional(),
   s2No: z.string().optional(),
 });
@@ -34,7 +34,7 @@ export default function Settings() {
   const [signaturePreview, setSignaturePreview] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const sigCanvasRef = useRef<SignatureCanvas>(null);
-  const { user, setUser } = useContext(AuthContext)!; 
+  const { user, setUser } = useContext(AuthContext)!;
 
   // --- FORM INIT ---
   const form = useForm<SettingsValues>({
@@ -103,14 +103,14 @@ export default function Settings() {
         finalSignature = sigCanvasRef.current.toDataURL("image/png");
       }
 
-      const payload = { 
-        ...data, 
-        signatureUrl: finalSignature || null 
+      const payload = {
+        ...data,
+        signatureUrl: finalSignature || null,
       };
-      
+
       const result = await authService.updateProfile(payload);
       setSignaturePreview(result.signatureUrl);
-      
+
       if (user && setUser) {
         setUser({
           ...user,
@@ -121,7 +121,7 @@ export default function Settings() {
           // Add other fields that should update in sidebar
           clinicAddress: data.clinicAddress || user.clinicAddress,
         });
-        
+
         // Also update localStorage for persistence
         const storedUser = localStorage.getItem("user");
         if (storedUser) {
@@ -137,14 +137,13 @@ export default function Settings() {
           localStorage.setItem("user", JSON.stringify(updatedUser));
         }
       }
-      
+
       toast.success("Settings updated successfully", {
         description: "Your profile information has been saved.",
       });
-
     } catch (error) {
       console.error("Failed to save settings:", error);
-      
+
       toast.error("Failed to save settings", {
         description: "Please check your connection and try again.",
       });
@@ -155,7 +154,6 @@ export default function Settings() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-10">
-      
       {/* HEADER */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
@@ -164,15 +162,23 @@ export default function Settings() {
               <SettingsIcon className="h-5 w-5" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900">Clinic Settings</h1>
-              <p className="text-sm text-slate-600">Manage your profile, license details, and branding</p>
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+                Clinic Settings
+              </h1>
+              <p className="text-sm text-slate-600">
+                Manage your profile, license details, and branding
+              </p>
             </div>
           </div>
         </div>
-        
+
         <div className="hidden sm:block">
           <Button onClick={form.handleSubmit(onSubmit)} disabled={isSaving}>
-            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+            {isSaving ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Save className="mr-2 h-4 w-4" />
+            )}
             Save Changes
           </Button>
         </div>
@@ -181,7 +187,6 @@ export default function Settings() {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
             {/* LEFT COLUMN: Profile & Clinic */}
             <div className="space-y-6 lg:col-span-2">
               <ProfileCard />
@@ -191,8 +196,8 @@ export default function Settings() {
             {/* RIGHT COLUMN: Legal & Signature */}
             <div className="space-y-6">
               <LegalCard />
-              
-              <SignatureCard 
+
+              <SignatureCard
                 signaturePreview={signaturePreview}
                 setSignaturePreview={setSignaturePreview}
                 sigCanvasRef={sigCanvasRef}
@@ -200,13 +205,12 @@ export default function Settings() {
                 onSaveDraw={saveDrawnSignature}
               />
             </div>
-
           </div>
 
           {/* MOBILE SAVE BUTTON */}
           <div className="mt-8 block sm:hidden">
-            <Button 
-              onClick={form.handleSubmit(onSubmit)} 
+            <Button
+              onClick={form.handleSubmit(onSubmit)}
               size="lg"
               disabled={isSaving}
               className="w-full shadow-md"
@@ -222,7 +226,6 @@ export default function Settings() {
               )}
             </Button>
           </div>
-
         </form>
       </Form>
     </div>

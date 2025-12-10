@@ -84,7 +84,11 @@ const getProfile = async () => {
 
 const updateProfile = async (data: Partial<IDoctor>) => {
   try {
-    const response = await axios.put(API_URL + "auth/profile", data, getConfig());
+    const response = await axios.put(
+      API_URL + "auth/profile",
+      data,
+      getConfig(),
+    );
 
     const user = getStoredUser();
     if (user) {

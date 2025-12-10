@@ -57,15 +57,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (error: unknown) {
       setIsError(true);
       let msg = "Login failed";
-      
+
       // Type Guard for Axios Error
       if (typeof error === "object" && error !== null && "response" in error) {
-          const err = error as { response: { data: { message: string } } };
-          msg = err.response?.data?.message || msg;
+        const err = error as { response: { data: { message: string } } };
+        msg = err.response?.data?.message || msg;
       } else if (error instanceof Error) {
-          msg = error.message;
+        msg = error.message;
       }
-      
+
       setMessage(msg);
       throw new Error(msg);
     } finally {
@@ -80,16 +80,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      setUser, // Add this to the provider value
-      isLoading, 
-      isError, 
-      message, 
-      login, 
-      logout, 
-      refreshUser 
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        setUser, // Add this to the provider value
+        isLoading,
+        isError,
+        message,
+        login,
+        logout,
+        refreshUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

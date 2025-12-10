@@ -8,7 +8,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 
 export function ProfileCard() {
   const { control } = useFormContext(); // Access parent form automatically
@@ -20,8 +26,12 @@ export function ProfileCard() {
           <User className="h-4 w-4" />
         </div>
         <div className="grid gap-0.5">
-          <CardTitle className="text-base font-semibold text-slate-900">Professional Profile</CardTitle>
-          <CardDescription className="text-sm">Information appearing on your document headers</CardDescription>
+          <CardTitle className="text-base font-semibold text-slate-900">
+            Professional Profile
+          </CardTitle>
+          <CardDescription className="text-sm">
+            Information appearing on your document headers
+          </CardDescription>
         </div>
       </CardHeader>
       <CardContent className="grid gap-6 pt-6">
@@ -32,7 +42,9 @@ export function ProfileCard() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-slate-700">Full Name</FormLabel>
-                <FormControl><Input {...field} /></FormControl>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
@@ -44,7 +56,9 @@ export function ProfileCard() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-slate-700">Title</FormLabel>
-                  <FormControl><Input placeholder="MD" {...field} /></FormControl>
+                  <FormControl>
+                    <Input placeholder="MD" {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -55,7 +69,9 @@ export function ProfileCard() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-slate-700">Specialty</FormLabel>
-                  <FormControl><Input placeholder="Physician" {...field} /></FormControl>
+                  <FormControl>
+                    <Input placeholder="Physician" {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -70,7 +86,9 @@ export function ProfileCard() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-slate-700">Email Address</FormLabel>
-                <FormControl><Input {...field} disabled /></FormControl>
+                <FormControl>
+                  <Input {...field} disabled />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
@@ -81,7 +99,9 @@ export function ProfileCard() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-slate-700">Contact Number</FormLabel>
-                <FormControl><Input placeholder="0917-XXX-XXXX" {...field} /></FormControl>
+                <FormControl>
+                  <Input placeholder="0917-XXX-XXXX" {...field} />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}

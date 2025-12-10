@@ -1,19 +1,19 @@
-import { useState, useContext } from "react"
-import { Link, useNavigate } from "react-router-dom" // Added useNavigate
-import { AuthContext } from "@/context/AuthContext"   // Added AuthContext
-import { Loader2, AlertCircle, Mail, Lock, ArrowRight } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { useState, useContext } from "react";
+import { Link, useNavigate } from "react-router-dom"; // Added useNavigate
+import { AuthContext } from "@/context/AuthContext"; // Added AuthContext
+import { Loader2, AlertCircle, Mail, Lock, ArrowRight } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Define the error shape (same as we did in Register)
 interface ApiError {
@@ -30,60 +30,64 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  const [formData, setFormData] = useState({ email: "", password: "" })
-  const [error, setError] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
+  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   // 1. Hook into your real Auth Context
-  const { login } = useContext(AuthContext)!
-  const navigate = useNavigate()
+  const { login } = useContext(AuthContext)!;
+  const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.id]: e.target.value })
-    if (error) setError("")
-  }
+    setFormData({ ...formData, [e.target.id]: e.target.value });
+    if (error) setError("");
+  };
 
   const handleSubmit = async () => {
-    setError("")
-    setIsLoading(true)
-    
+    setError("");
+    setIsLoading(true);
+
     // Client-side validation
     if (!formData.email || !formData.password) {
-      setError("Please enter both email and password.")
-      setIsLoading(false)
-      return
+      setError("Please enter both email and password.");
+      setIsLoading(false);
+      return;
     }
 
     try {
       // 2. REAL API CALL (Replaces the simulation)
-      await login(formData)
-      
-      console.log("Login successful")
-      navigate("/") // Redirect to dashboard
-      
+      await login(formData);
+
+      console.log("Login successful");
+      navigate("/"); // Redirect to dashboard
     } catch (err: unknown) {
       const apiError = err as ApiError;
       const status = apiError.response?.status;
-      const errorMessage = apiError.response?.data?.message || apiError.message || "Login failed.";
+      const errorMessage =
+        apiError.response?.data?.message || apiError.message || "Login failed.";
 
       // 3. Map Backend Errors to UI Alerts
       if (status === 404 || errorMessage.toLowerCase().includes("not found")) {
         setError("No account found with this email address.");
-      } else if (status === 401 || status === 400 || errorMessage.toLowerCase().includes("invalid")) {
+      } else if (
+        status === 401 ||
+        status === 400 ||
+        errorMessage.toLowerCase().includes("invalid")
+      ) {
         setError("Invalid credentials. Please check your password.");
       } else {
         setError("Something went wrong. Please try again later.");
       }
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !isLoading) {
-      handleSubmit()
+    if (e.key === "Enter" && !isLoading) {
+      handleSubmit();
     }
-  }
+  };
 
   return (
     <div className={cn("grid gap-6", className)} {...props}>
@@ -98,7 +102,10 @@ export function LoginForm({
         </CardHeader>
         <CardContent className="grid gap-4">
           {error && (
-            <Alert variant="destructive" className="animate-in fade-in-50 bg-destructive/10 border-destructive/20 text-destructive">
+            <Alert
+              variant="destructive"
+              className="animate-in fade-in-50 bg-destructive/10 border-destructive/20 text-destructive"
+            >
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
@@ -121,7 +128,10 @@ export function LoginForm({
                 value={formData.email}
                 onChange={handleChange}
                 onKeyPress={handleKeyPress}
-                className={cn("pl-9 h-10 bg-background", error && "border-destructive focus-visible:ring-destructive")}
+                className={cn(
+                  "pl-9 h-10 bg-background",
+                  error && "border-destructive focus-visible:ring-destructive",
+                )}
                 required
               />
             </div>
@@ -150,14 +160,17 @@ export function LoginForm({
                 value={formData.password}
                 onChange={handleChange}
                 onKeyPress={handleKeyPress}
-                className={cn("pl-9 h-10 bg-background", error && "border-destructive focus-visible:ring-destructive")}
+                className={cn(
+                  "pl-9 h-10 bg-background",
+                  error && "border-destructive focus-visible:ring-destructive",
+                )}
                 required
               />
             </div>
           </div>
 
-          <Button 
-            className="mt-2 w-full h-10 font-semibold transition-all" 
+          <Button
+            className="mt-2 w-full h-10 font-semibold transition-all"
             onClick={handleSubmit}
             disabled={isLoading}
           >
@@ -177,13 +190,13 @@ export function LoginForm({
 
       <div className="text-center text-sm text-muted-foreground">
         Don&apos;t have an account?{" "}
-        <Link 
-          to="/register" 
+        <Link
+          to="/register"
           className="font-medium text-primary hover:underline underline-offset-4"
         >
           Sign up
         </Link>
       </div>
     </div>
-  )
+  );
 }

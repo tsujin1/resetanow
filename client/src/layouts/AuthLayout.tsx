@@ -1,5 +1,5 @@
-import { Outlet } from "react-router-dom"
-import { Activity } from "lucide-react"
+import { Outlet } from "react-router-dom";
+import { Activity } from "lucide-react";
 
 export default function AuthLayout() {
   return (
@@ -21,7 +21,7 @@ export default function AuthLayout() {
             </span>
           </div>
         </div>
-        
+
         {/* Content */}
         <div className="w-full">
           <Outlet />
@@ -30,16 +30,22 @@ export default function AuthLayout() {
         {/* Footer */}
         <p className="px-8 text-center text-xs text-muted-foreground">
           By clicking continue, you agree to our{" "}
-          <a href="#" className="underline underline-offset-4 hover:text-primary">
+          <a
+            href="#"
+            className="underline underline-offset-4 hover:text-primary"
+          >
             Terms of Service
           </a>{" "}
           and{" "}
-          <a href="#" className="underline underline-offset-4 hover:text-primary">
+          <a
+            href="#"
+            className="underline underline-offset-4 hover:text-primary"
+          >
             Privacy Policy
           </a>
           .
         </p>
       </div>
     </div>
-  )
+  );
 }

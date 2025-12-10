@@ -82,8 +82,10 @@ export default function AddPatientDialog({ className }: AddPatientDialogProps) {
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
-            
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="grid gap-4 py-4"
+          >
             {/* Name Field */}
             <FormField
               control={form.control}
@@ -108,11 +110,11 @@ export default function AddPatientDialog({ className }: AddPatientDialogProps) {
                   <FormItem>
                     <FormLabel>Age</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
-                        placeholder="0" 
+                      <Input
+                        type="number"
+                        placeholder="0"
                         {...field}
-                        value={field.value as number} 
+                        value={field.value as number}
                         onChange={(e) => field.onChange(e.target.valueAsNumber)}
                       />
                     </FormControl>
@@ -128,7 +130,10 @@ export default function AddPatientDialog({ className }: AddPatientDialogProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Gender</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select" />
