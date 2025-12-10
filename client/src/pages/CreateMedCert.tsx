@@ -1,10 +1,9 @@
-// pages/CreateMedCert.tsx
 import { useRef, useState, useEffect, useContext, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useForm, useWatch, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Save, FileBadge, Download, AlertCircle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AuthContext } from "@/context/AuthContext";
@@ -15,10 +14,13 @@ import type { IPatient } from "@/types";
 // Import schema and type
 import { medCertSchema, type MedCertValues } from "@/schemas/medCert";
 
+// Import components
 import { PatientInfoCard } from "@/components/features/medcert/PatientInfoCard";
-import { ClinicalInfoCard } from "@/components/features/medcert/ClinicalInfoCard";
-import { BillingInfoCard } from "@/components/features/medcert/BillingInfoCard";
-import { MedCertTemplate } from "../components/features/template/MedCertTemplate";
+import { ClinicalInfoCard } from "@/components/features/medcert/ClinicalCard";
+import { BillingInfoCard } from "@/components/features/medcert/BillingCard";
+import MedCertHeader from "@/components/features/medcert/MedCertHeader";
+import MedCertActionButtons from "@/components/features/medcert/MedCertActionButtons";
+import { MedCertTemplate } from "@/components/features/template/MedCertTemplate";
 
 export default function CreateMedCert() {
   const componentRef = useRef<HTMLDivElement>(null);
@@ -28,6 +30,9 @@ export default function CreateMedCert() {
   const [patients, setPatients] = useState<IPatient[]>([]);
   const [isLoadingPatients, setIsLoadingPatients] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
+  const patientId = searchParams.get("patientId");
+  const patientName = searchParams.get("patientName");
 
   const form = useForm<MedCertValues>({
     resolver: zodResolver(medCertSchema),
@@ -37,12 +42,15 @@ export default function CreateMedCert() {
       diagnosis: "",
       recommendation: "",
       amount: 0,
-      patientId: "",
+      patientId: patientId || "",
     },
   });
 
   const values = useWatch({ control: form.control });
   const selectedPatient = patients.find((p) => p._id === values.patientId);
+
+  // Logic to determine if download is allowed
+  const canDownload = !!selectedPatient && !isLoadingPatients;
 
   const fetchPatients = useCallback(async () => {
     try {
@@ -50,6 +58,15 @@ export default function CreateMedCert() {
       setError(null);
       const data = await patientService.getPatients();
       setPatients(data);
+
+      if (patientId) {
+        const patient = data.find((p) => p._id === patientId);
+        if (patient) {
+          form.setValue("patientId", patientId);
+        } else if (patientName) {
+          form.setValue("patientId", patientId);
+        }
+      }
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to load patients";
@@ -58,7 +75,7 @@ export default function CreateMedCert() {
     } finally {
       setIsLoadingPatients(false);
     }
-  }, []);
+  }, [patientId, patientName, form]);
 
   useEffect(() => {
     fetchPatients();
@@ -108,7 +125,6 @@ export default function CreateMedCert() {
     }
   };
 
-  // Explicitly typed SubmitHandler
   const onSubmit: SubmitHandler<MedCertValues> = async (data) => {
     try {
       setIsSaving(true);
@@ -144,49 +160,14 @@ export default function CreateMedCert() {
         </Alert>
       )}
 
-      {/* HEADER AREA */}
-      <div className="no-print flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-1">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-900 text-slate-50">
-              <FileBadge className="h-5 w-5" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                Medical Certificate
-              </h1>
-              <p className="text-sm text-slate-600">
-                Generate and manage patient certification documents
-              </p>
-            </div>
-          </div>
-        </div>
-        {/* Desktop Actions */}
-        <div className="hidden sm:flex flex-wrap gap-2">
-          <Button
-            variant="outline"
-            onClick={handleDownloadPdf}
-            disabled={isGenerating || isLoadingPatients || !selectedPatient}
-          >
-            {isGenerating ? (
-              "Generating..."
-            ) : (
-              <>
-                <Download className="mr-2 h-4 w-4" /> Download PDF
-              </>
-            )}
-          </Button>
-          <Button onClick={form.handleSubmit(onSubmit)} disabled={isSaving}>
-            {isSaving ? (
-              "Saving..."
-            ) : (
-              <>
-                <Save className="mr-2 h-4 w-4" /> Save Record
-              </>
-            )}
-          </Button>
-        </div>
-      </div>
+      {/* HEADER COMPONENT */}
+      <MedCertHeader
+        onDownloadPdf={handleDownloadPdf}
+        onSave={form.handleSubmit(onSubmit)}
+        isGenerating={isGenerating}
+        isSaving={isSaving}
+        disableDownload={!canDownload}
+      />
 
       {/* MAIN FORM LAYOUT */}
       <div className="no-print">
@@ -207,44 +188,20 @@ export default function CreateMedCert() {
             <div className="space-y-6">
               <BillingInfoCard
                 control={form.control}
-                // FIX: Fallback to 0 if undefined to satisfy stricter TS type
                 totalAmount={values.amount || 0}
               />
             </div>
           </div>
         </Form>
 
-        {/* MOBILE ACTIONS */}
-        <div className="mt-8 grid grid-cols-1 gap-3 sm:hidden pb-10">
-          <Button
-            variant="outline"
-            onClick={handleDownloadPdf}
-            disabled={isGenerating || isLoadingPatients || !selectedPatient}
-            className="w-full"
-          >
-            {isGenerating ? (
-              "Generating..."
-            ) : (
-              <>
-                <Download className="mr-2 h-4 w-4" /> Download PDF
-              </>
-            )}
-          </Button>
-          <Button
-            onClick={form.handleSubmit(onSubmit)}
-            className="w-full"
-            size="lg"
-            disabled={isSaving}
-          >
-            {isSaving ? (
-              "Saving..."
-            ) : (
-              <>
-                <Save className="mr-2 h-4 w-4" /> Save Record
-              </>
-            )}
-          </Button>
-        </div>
+        {/* MOBILE ACTION BUTTONS COMPONENT */}
+        <MedCertActionButtons
+          onDownloadPdf={handleDownloadPdf}
+          onSave={form.handleSubmit(onSubmit)}
+          isGenerating={isGenerating}
+          isSaving={isSaving}
+          disableDownload={!canDownload}
+        />
       </div>
 
       {/* OFF-SCREEN TEMPLATE */}

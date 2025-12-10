@@ -1,3 +1,4 @@
+import type { Control } from "react-hook-form";
 import { Loader2 } from "lucide-react";
 import {
   Card,
@@ -20,11 +21,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Control } from "react-hook-form";
+import { Input } from "@/components/ui/input";
 import type { IPatient } from "@/types";
-import type { PrescriptionValues } from "@/pages/CreateRx";
+
+// --- THE FIX IS HERE ---
+// Import the type from the schema file, NOT from the page
+import type { PrescriptionValues } from "@/schemas/prescription";
 
 interface PatientSelectionCardProps {
+  // Now this type matches exactly what CreateRx passes down
   control: Control<PrescriptionValues>;
   patients: IPatient[];
   isLoadingPatients: boolean;
@@ -48,52 +53,78 @@ export default function PatientSelectionCard({
         </CardDescription>
       </CardHeader>
       <CardContent className="pt-6">
-        <FormField
-          control={control}
-          name="patientId"
-          render={({ field }) => (
-            <FormItem className="space-y-2">
-              <FormLabel className="text-sm font-medium text-slate-700">
-                Select Patient
-              </FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+        <div className="grid gap-5 sm:grid-cols-2">
+          {/* Patient Selection Field */}
+          <FormField
+            control={control}
+            name="patientId"
+            render={({ field }) => (
+              <FormItem className="space-y-2">
+                <FormLabel className="text-sm font-medium text-slate-700">
+                  Select Patient
+                </FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  value={field.value} // Bind value explicitly to ensure controlled component
+                >
+                  <FormControl>
+                    <SelectTrigger className="h-10">
+                      <SelectValue placeholder="Search patient..." />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {isLoadingPatients ? (
+                      <div className="p-4 text-center text-sm text-slate-500">
+                        <Loader2 className="h-4 w-4 animate-spin mx-auto mb-2" />
+                        Loading patients...
+                      </div>
+                    ) : patients.length === 0 ? (
+                      <div className="p-4 text-center text-sm text-slate-500">
+                        No patients found. Please add a patient first.
+                      </div>
+                    ) : (
+                      patients.map((p) => (
+                        <SelectItem
+                          key={p._id}
+                          value={p._id}
+                          className="cursor-pointer"
+                        >
+                          <div className="flex flex-col">
+                            <span className="font-medium">{p.name}</span>
+                            <span className="text-xs text-slate-500 text-left">
+                              {p.age} yrs • {p.gender}
+                            </span>
+                          </div>
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Date Picker Field */}
+          <FormField
+            control={control}
+            name="date"
+            render={({ field }) => (
+              <FormItem className="space-y-2">
+                <FormLabel className="text-sm font-medium text-slate-700">
+                  Date
+                </FormLabel>
                 <FormControl>
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Search patient..." />
-                  </SelectTrigger>
+                  <Input type="date" {...field} className="h-10" />
                 </FormControl>
-                <SelectContent>
-                  {isLoadingPatients ? (
-                    <div className="p-4 text-center text-sm text-slate-500">
-                      <Loader2 className="h-4 w-4 animate-spin mx-auto mb-2" />
-                      Loading patients...
-                    </div>
-                  ) : patients.length === 0 ? (
-                    <div className="p-4 text-center text-sm text-slate-500">
-                      No patients found. Please add a patient first.
-                    </div>
-                  ) : (
-                    patients.map((p) => (
-                      <SelectItem
-                        key={p._id}
-                        value={p._id}
-                        className="cursor-pointer"
-                      >
-                        <div className="flex flex-col">
-                          <span className="font-medium">{p.name}</span>
-                          <span className="text-xs text-slate-500 text-left">
-                            {p.age} yrs • {p.gender}
-                          </span>
-                        </div>
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Selected Patient Preview */}
         {selectedPatient && (
           <div className="mt-5 rounded-md border border-slate-200 bg-slate-50/50 p-4">
             <div className="grid gap-3 text-sm sm:grid-cols-2">

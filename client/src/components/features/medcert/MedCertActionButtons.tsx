@@ -1,27 +1,27 @@
 import { Save, Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-interface RxActionButtonsProps {
+interface MedCertActionButtonsProps {
   onDownloadPdf: () => void;
   onSave: () => void | Promise<void>;
   isGenerating: boolean;
   isSaving: boolean;
-  disableDownload: boolean; // Added prop
+  disableDownload: boolean;
 }
 
-export default function RxActionButtons({
+export default function MedCertActionButtons({
   onDownloadPdf,
   onSave,
   isGenerating,
   isSaving,
   disableDownload,
-}: RxActionButtonsProps) {
+}: MedCertActionButtonsProps) {
   return (
     <div className="mt-8 grid grid-cols-1 gap-3 sm:hidden pb-10">
       <Button
         variant="outline"
         onClick={onDownloadPdf}
-        disabled={isGenerating || disableDownload} // Updated logic
+        disabled={isGenerating || disableDownload}
         className="w-full"
       >
         {isGenerating ? (

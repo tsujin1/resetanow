@@ -4,10 +4,12 @@ import {
   FileBadge,
   Trash2,
   AlertTriangle,
+  History,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TableCell, TableRow } from "@/components/ui/table";
+import { useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,6 +44,7 @@ export default function PatientTableRow({
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
 
   const getDaysSinceVisit = (lastVisit: string) => {
     const days = Math.floor(
@@ -129,13 +132,35 @@ export default function PatientTableRow({
               Actions
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="cursor-pointer">
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onClick={() =>
+                navigate(
+                  `/create-rx?patientId=${patient._id}&patientName=${encodeURIComponent(patient.name)}`,
+                )
+              }
+            >
               <FilePlus className="mr-2 h-3.5 w-3.5 text-slate-500" />
               <span>Create Prescription</span>
             </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer">
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onClick={() =>
+                navigate(
+                  `/create-mc?patientId=${patient._id}&patientName=${encodeURIComponent(patient.name)}`,
+                )
+              }
+            >
               <FileBadge className="mr-2 h-3.5 w-3.5 text-slate-500" />
               <span>Create Med Cert</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onClick={() => navigate(`/patients/${patient._id}/history`)}
+            >
+              <History className="mr-2 h-3.5 w-3.5 text-slate-500" />
+              <span>View History</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem

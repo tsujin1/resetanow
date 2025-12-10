@@ -3,7 +3,7 @@ import { forwardRef } from "react";
 // --- Configuration ---
 const BRAND_COLOR = "#1e293b"; // Slate-900
 
-interface RxTemplateProps {
+export interface RxTemplateProps {
   data: {
     patientName?: string;
     age?: string | number;
@@ -24,7 +24,7 @@ interface RxTemplateProps {
     specialty: string;
     licenseNo: string;
     ptrNo: string;
-    // s2No removed per request
+    signatureUrl?: string | null; // Added this field
   };
 }
 
@@ -177,9 +177,18 @@ export const RxTemplate = forwardRef<HTMLDivElement, RxTemplateProps>(
           {/* 4. FOOTER (UPDATED SIGNATURE BLOCK) */}
           <div className="mt-auto pt-4">
             <div className="flex justify-end">
-              <div className="w-[60%] text-center">
+              <div className="w-[60%] text-center relative">
+                {/* SIGNATURE IMAGE */}
+                {doctor.signatureUrl && (
+                  <img
+                    src={doctor.signatureUrl}
+                    alt="Signature"
+                    className="h-16 w-auto object-contain mx-auto absolute bottom-8 left-0 right-0"
+                  />
+                )}
+
                 {/* Signature Line */}
-                <div className="border-b border-slate-900 mb-1 h-10"></div>
+                <div className="border-b border-slate-900 mb-1 h-10 mt-6 relative z-10"></div>
 
                 {/* Name */}
                 <p className="font-bold uppercase text-xs">{doctor.name}</p>

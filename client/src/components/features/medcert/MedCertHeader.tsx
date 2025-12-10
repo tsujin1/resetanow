@@ -1,35 +1,35 @@
-import { Save, Download, Loader2, Pill } from "lucide-react";
+import { Save, Download, Loader2, FileBadge } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-interface RxHeaderProps {
+interface MedCertHeaderProps {
   onDownloadPdf: () => void;
   onSave: () => void;
   isGenerating: boolean;
   isSaving: boolean;
-  disableDownload: boolean; // Added prop
+  disableDownload: boolean;
 }
 
-export default function RxHeader({
+export default function MedCertHeader({
   onDownloadPdf,
   onSave,
   isGenerating,
   isSaving,
   disableDownload,
-}: RxHeaderProps) {
+}: MedCertHeaderProps) {
   return (
     <div className="no-print">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-900 text-slate-50">
-              <Pill className="h-5 w-5" />
+              <FileBadge className="h-5 w-5" />
             </div>
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                Create Prescription
+                Medical Certificate
               </h1>
               <p className="text-sm text-slate-600">
-                Create digital prescriptions and track billing
+                Generate and manage patient certification documents
               </p>
             </div>
           </div>
@@ -38,7 +38,7 @@ export default function RxHeader({
           <Button
             variant="outline"
             onClick={onDownloadPdf}
-            disabled={isGenerating || disableDownload} // Updated logic
+            disabled={isGenerating || disableDownload}
           >
             {isGenerating ? (
               <span className="animate-pulse">Generating...</span>

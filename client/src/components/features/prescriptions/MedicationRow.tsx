@@ -1,15 +1,14 @@
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import type { Control, FieldArrayWithId } from "react-hook-form";
-import type { PrescriptionValues } from "@/pages/CreateRx";
+import type { PrescriptionValues } from "@/schemas/prescription";
 
 interface MedicationRowProps {
   control: Control<PrescriptionValues>;
@@ -21,99 +20,87 @@ interface MedicationRowProps {
 
 export default function MedicationRow({
   control,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  field: _field,
   index,
   onRemove,
   canRemove,
 }: MedicationRowProps) {
-  // field is used for the key prop in MedicationsCard.map(), but not directly in this component
   return (
-    <div className="grid grid-cols-12 gap-3 items-start rounded-lg border border-slate-100 p-3 bg-slate-50/30">
-      <div className="col-span-12 sm:col-span-4">
+    <div className="group relative grid gap-4 rounded-lg border border-slate-200 p-4 transition-colors hover:border-slate-300 sm:grid-cols-12">
+      {/* Name */}
+      <div className="sm:col-span-4">
         <FormField
           control={control}
           name={`medications.${index}.name`}
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-xs text-slate-500">
-                Medicine Name
-              </FormLabel>
               <FormControl>
-                <Input
-                  placeholder="e.g. Amoxicillin"
-                  {...field}
-                  className="bg-white"
-                />
+                <Input placeholder="Medicine Name" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
       </div>
-      <div className="col-span-6 sm:col-span-2">
+
+      {/* Dosage */}
+      <div className="sm:col-span-3">
         <FormField
           control={control}
           name={`medications.${index}.dosage`}
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-xs text-slate-500">Dosage</FormLabel>
               <FormControl>
-                <Input placeholder="500mg" {...field} className="bg-white" />
+                <Input placeholder="Dosage (e.g. 500mg)" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
       </div>
-      <div className="col-span-6 sm:col-span-2">
+
+      {/* Quantity */}
+      <div className="sm:col-span-3">
         <FormField
           control={control}
           name={`medications.${index}.quantity`}
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-xs text-slate-500">Qty</FormLabel>
               <FormControl>
-                <Input placeholder="#" {...field} className="bg-white" />
+                <Input placeholder="Qty (e.g. 30 tabs)" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
       </div>
-      <div className="col-span-11 sm:col-span-3">
+
+      {/* Instructions */}
+      <div className="sm:col-span-11">
         <FormField
           control={control}
           name={`medications.${index}.instructions`}
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-xs text-slate-500">
-                Sig. / Instructions
-              </FormLabel>
               <FormControl>
-                <Input
-                  placeholder="1 tab BID"
-                  {...field}
-                  className="bg-white"
-                />
+                <Input placeholder="Sig / Instructions" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
       </div>
-      <div className="col-span-1 text-center pt-7">
-        <Button
-          variant="ghost"
-          size="icon"
-          type="button"
-          className="text-red-400 hover:text-red-600 hover:bg-red-50 h-8 w-8"
-          onClick={() => onRemove(index)}
-          disabled={!canRemove}
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
-      </div>
+
+      {/* Delete Button */}
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="absolute right-2 top-2 h-8 w-8 text-slate-400 hover:text-red-500 sm:static sm:col-span-1 sm:h-10 sm:w-full"
+        onClick={() => onRemove(index)}
+        disabled={!canRemove}
+      >
+        <Trash2 className="h-4 w-4" />
+      </Button>
     </div>
   );
 }

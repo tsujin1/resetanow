@@ -25,7 +25,7 @@ const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Patients", href: "/patients", icon: Users },
   { label: "Create Prescription", href: "/create-rx", icon: Pill },
-  { label: "Medical Certificate", href: "/med-cert", icon: FileBadge },
+  { label: "Medical Certificate", href: "/create-mc", icon: FileBadge },
   { label: "Settings", href: "/settings", icon: Settings },
 ];
 

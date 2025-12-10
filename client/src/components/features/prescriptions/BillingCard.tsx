@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import type { Control } from "react-hook-form";
-import type { PrescriptionValues } from "@/pages/CreateRx";
+import type { PrescriptionValues } from "@/schemas/prescription";
 
 interface BillingCardProps {
   control: Control<PrescriptionValues>;
@@ -51,8 +51,13 @@ export default function BillingCard({ control, amount }: BillingCardProps) {
                     type="number"
                     placeholder="0.00"
                     {...field}
-                    value={field.value as number}
-                    onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                    // FIX 1: If value is 0, show empty string so user doesn't have to delete the 0
+                    value={field.value === 0 ? "" : field.value}
+                    onChange={(e) => {
+                      // FIX 2: Handle empty string turning back into 0 for state
+                      const val = e.target.value;
+                      field.onChange(val === "" ? 0 : parseFloat(val));
+                    }}
                     className="h-10 pl-8"
                   />
                 </div>

@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/card";
 import MedicationRow from "./MedicationRow";
 import type { Control, FieldArrayWithId } from "react-hook-form";
-import type { PrescriptionValues } from "@/pages/CreateRx";
+import type { PrescriptionValues } from "@/schemas/prescription";
 
 interface MedicationsCardProps {
   control: Control<PrescriptionValues>;
@@ -39,7 +39,7 @@ export default function MedicationsCard({
           <Plus className="mr-2 h-4 w-4" /> Add Item
         </Button>
       </CardHeader>
-      <CardContent className="pt-6 space-y-4">
+      <CardContent className="space-y-4 pt-6">
         {fields.map((field, index) => (
           <MedicationRow
             key={field.id}

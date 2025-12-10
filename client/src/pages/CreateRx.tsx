@@ -1,65 +1,57 @@
 import { useRef, useState, useEffect, useContext } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   useForm,
   useFieldArray,
   useWatch,
   type SubmitHandler,
-  type Control,
 } from "react-hook-form";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form";
 import { toast } from "sonner";
-import { RxTemplate } from "@/components/features/template/RxTemplate";
 import { AuthContext } from "@/context/AuthContext";
 import patientService from "@/services/patientService";
 import prescriptionService from "@/services/prescriptionService";
+import type { IPatient } from "@/types";
+
+// --- IMPORT SHARED SCHEMA ---
+import {
+  prescriptionSchema,
+  type PrescriptionValues,
+} from "@/schemas/prescription";
+
+// --- IMPORT FEATURES ---
 import RxHeader from "@/components/features/prescriptions/RxHeader";
+import RxActionButtons from "@/components/features/prescriptions/RxActionButtons";
 import PatientSelectionCard from "@/components/features/prescriptions/PatientSelectionCard";
 import MedicationsCard from "@/components/features/prescriptions/MedicationsCard";
 import RxDetailsCard from "@/components/features/prescriptions/RxDetailsCard";
 import BillingCard from "@/components/features/prescriptions/BillingCard";
-import RxActionButtons from "@/components/features/prescriptions/RxActionButtons";
-import type { IPatient } from "@/types";
-
-// --- 1. SCHEMA ---
-const prescriptionSchema = z.object({
-  patientId: z.string().min(1, "Please select a patient"),
-  diagnosis: z.string().optional(),
-  date: z.string(),
-  amount: z.coerce.number().min(0, "Amount is required"),
-  medications: z
-    .array(
-      z.object({
-        name: z.string().min(1, "Required"),
-        dosage: z.string().min(1, "Required"),
-        instructions: z.string().min(1, "Required"),
-        quantity: z.string().min(1, "Required"),
-      }),
-    )
-    .min(1, "At least one medicine is required"),
-});
-
-type PrescriptionValues = z.infer<typeof prescriptionSchema>;
-
-// Export the type for use in child components
-export type { PrescriptionValues };
+import { RxTemplate } from "@/components/features/template/RxTemplate";
 
 export default function CreateRx() {
   const componentRef = useRef<HTMLDivElement>(null);
   const { user } = useContext(AuthContext) || {};
+
+  // State
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [patients, setPatients] = useState<IPatient[]>([]);
   const [isLoadingPatients, setIsLoadingPatients] = useState(true);
 
-  const form = useForm({
+  // URL Params
+  const [searchParams] = useSearchParams();
+  const patientId = searchParams.get("patientId");
+  const patientName = searchParams.get("patientName");
+
+  // Form Setup
+  const form = useForm<PrescriptionValues>({
     resolver: zodResolver(prescriptionSchema),
     defaultValues: {
       date: new Date().toISOString().split("T")[0],
       diagnosis: "",
       amount: 0,
-      patientId: "",
+      patientId: patientId || "",
       medications: [{ name: "", dosage: "", instructions: "", quantity: "" }],
     },
   });
@@ -69,31 +61,45 @@ export default function CreateRx() {
     name: "medications",
   });
 
-  // Fetch patients on component mount
+  // Watch values for logic
+  const values = useWatch({ control: form.control });
+  const selectedPatient = patients.find((p) => p._id === values.patientId);
+
+  // Logic: Disable download if no patient is selected
+  const canDownload = !!selectedPatient && !isLoadingPatients;
+
+  // Fetch Patients
   useEffect(() => {
     const fetchPatients = async () => {
       try {
         setIsLoadingPatients(true);
         const data = await patientService.getPatients();
         setPatients(data);
+
+        // Handle URL pre-fill
+        if (patientId) {
+          const patient = data.find((p) => p._id === patientId);
+          if (patient) {
+            form.setValue("patientId", patientId);
+          } else if (patientName) {
+            form.setValue("patientId", patientId);
+          }
+        }
       } catch (err) {
         console.error("Error fetching patients:", err);
+        toast.error("Failed to load patients");
       } finally {
         setIsLoadingPatients(false);
       }
     };
 
     fetchPatients();
-  }, []);
+  }, [form, patientId, patientName]);
 
-  const values = useWatch({ control: form.control });
-  const selectedPatient = patients.find((p) => p._id === values.patientId);
-
-  // --- 4. PDF GENERATION ---
+  // PDF Generation
   const handleDownloadPdf = async () => {
     const element = componentRef.current;
     if (!element) return;
-
     setIsGenerating(true);
 
     try {
@@ -108,8 +114,6 @@ export default function CreateRx() {
       });
 
       const imgData = canvas.toDataURL("image/jpeg", 1.0);
-
-      // Half Letter Size
       const pdf = new jsPDF({
         orientation: "portrait",
         unit: "mm",
@@ -123,11 +127,13 @@ export default function CreateRx() {
       pdf.save(`Rx_${selectedPatient?.name || "Unknown"}.pdf`);
     } catch (error) {
       console.error("PDF Generation failed:", error);
+      toast.error("Failed to generate PDF");
     } finally {
       setIsGenerating(false);
     }
   };
 
+  // Submit Handler
   const onSubmit: SubmitHandler<PrescriptionValues> = async (data) => {
     try {
       setIsSaving(true);
@@ -141,27 +147,22 @@ export default function CreateRx() {
         medications: data.medications,
       });
 
-      // Show success toast
       toast.success("Prescription saved", {
         description: "The prescription was successfully saved.",
       });
 
-      // Reset form after successful save
       form.reset({
         date: new Date().toISOString().split("T")[0],
         diagnosis: "",
         amount: 0,
+        patientId: "",
         medications: [{ name: "", dosage: "", instructions: "", quantity: "" }],
       });
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to save prescription";
       console.error("Error saving prescription:", err);
-
-      // Show error toast
-      toast.error("Failed to save prescription", {
-        description: errorMessage,
-      });
+      toast.error("Failed to save", { description: errorMessage });
     } finally {
       setIsSaving(false);
     }
@@ -169,29 +170,30 @@ export default function CreateRx() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
+      {/* HEADER */}
       <RxHeader
         onDownloadPdf={handleDownloadPdf}
         onSave={form.handleSubmit(onSubmit)}
         isGenerating={isGenerating}
         isSaving={isSaving}
+        disableDownload={!canDownload}
       />
 
-      {/* --- FORM AREA --- */}
+      {/* FORM AREA */}
       <div className="no-print">
         <Form {...form}>
           <div className="grid gap-6 lg:grid-cols-3">
-            {/* LEFT COLUMN (Patient & Meds) */}
+            {/* Left Column */}
             <div className="space-y-6 lg:col-span-2">
               <PatientSelectionCard
-                control={form.control as unknown as Control<PrescriptionValues>}
+                control={form.control}
                 patients={patients}
                 isLoadingPatients={isLoadingPatients}
                 selectedPatient={selectedPatient}
               />
 
               <MedicationsCard
-                // Fix 2: Cast the control
-                control={form.control as unknown as Control<PrescriptionValues>}
+                control={form.control}
                 fields={fields}
                 onAdd={() =>
                   append({
@@ -205,30 +207,29 @@ export default function CreateRx() {
               />
             </div>
 
-            {/* RIGHT COLUMN (Rx Details & Billing) */}
+            {/* Right Column */}
             <div className="space-y-6">
-              {/* Fix 3: Cast the control */}
-              <RxDetailsCard
-                control={form.control as unknown as Control<PrescriptionValues>}
-              />
+              <RxDetailsCard control={form.control} />
 
               <BillingCard
-                // Fix 4: Cast the control
-                control={form.control as unknown as Control<PrescriptionValues>}
+                control={form.control}
                 amount={Number(values.amount) || 0}
               />
             </div>
           </div>
         </Form>
+
+        {/* Mobile Action Buttons */}
         <RxActionButtons
           onDownloadPdf={handleDownloadPdf}
           onSave={form.handleSubmit(onSubmit)}
           isGenerating={isGenerating}
           isSaving={isSaving}
+          disableDownload={!canDownload}
         />
       </div>
 
-      {/* --- HIDDEN PRINT TEMPLATE --- */}
+      {/* OFF-SCREEN TEMPLATE */}
       <div
         style={{
           position: "absolute",
@@ -259,6 +260,7 @@ export default function CreateRx() {
             specialty: user?.role || "",
             licenseNo: user?.licenseNo || "",
             ptrNo: user?.ptrNo || "",
+            signatureUrl: user?.signatureUrl,
           }}
         />
       </div>

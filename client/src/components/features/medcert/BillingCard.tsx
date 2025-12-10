@@ -15,6 +15,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import type { MedCertValues } from "@/schemas/medCert";
+
 interface BillingInfoCardProps {
   control: Control<MedCertValues>;
   totalAmount: number;
@@ -52,8 +53,13 @@ export function BillingInfoCard({
                     type="number"
                     placeholder="0.00"
                     {...field}
-                    value={field.value}
-                    onChange={(e) => field.onChange(Number(e.target.value))}
+                    // FIX 1: If value is 0, show empty string so user sees placeholder
+                    value={field.value === 0 ? "" : field.value}
+                    // FIX 2: Handle empty string vs number conversion
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      field.onChange(val === "" ? 0 : parseFloat(val));
+                    }}
                     className="h-10 pl-8"
                   />
                 </div>

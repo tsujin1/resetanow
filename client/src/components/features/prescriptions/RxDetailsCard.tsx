@@ -17,7 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { Control } from "react-hook-form";
-import type { PrescriptionValues } from "@/pages/CreateRx";
+import type { PrescriptionValues } from "@/schemas/prescription";
 
 interface RxDetailsCardProps {
   control: Control<PrescriptionValues>;
@@ -35,6 +35,7 @@ export default function RxDetailsCard({ control }: RxDetailsCardProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="pt-6 space-y-5">
+        {/* Date Field */}
         <FormField
           control={control}
           name="date"
@@ -50,7 +51,10 @@ export default function RxDetailsCard({ control }: RxDetailsCardProps) {
             </FormItem>
           )}
         />
+
         <Separator />
+
+        {/* Diagnosis Field */}
         <FormField
           control={control}
           name="diagnosis"
