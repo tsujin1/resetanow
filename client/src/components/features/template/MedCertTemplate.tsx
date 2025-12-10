@@ -369,7 +369,7 @@ export const MedCertTemplate = forwardRef<HTMLDivElement, MedCertTemplateProps>(
           <div
             style={{
               position: "absolute",
-              bottom: "20mm", // Fixed distance from bottom edge (Pinned)
+              bottom: "30mm", // Lowered signature position by 10mm
               right: "20mm", // Fixed distance from right edge
               textAlign: "center",
               width: "300px",
@@ -420,6 +420,9 @@ export const MedCertTemplate = forwardRef<HTMLDivElement, MedCertTemplateProps>(
                 Lic No. {doctor.licenseNo}
               </span>
               <span style={{ display: "block" }}>PTR No. {doctor.ptrNo}</span>
+              {doctor.s2No && (
+                <span style={{ display: "block" }}>S2 No. {doctor.s2No}</span>
+              )}
             </div>
           </div>
         </div>

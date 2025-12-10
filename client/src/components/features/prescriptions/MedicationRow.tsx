@@ -5,6 +5,7 @@ import {
   FormControl,
   FormField,
   FormItem,
+  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import type { Control, FieldArrayWithId } from "react-hook-form";
@@ -25,82 +26,119 @@ export default function MedicationRow({
   canRemove,
 }: MedicationRowProps) {
   return (
-    <div className="group relative grid gap-4 rounded-lg border border-slate-200 p-4 transition-colors hover:border-slate-300 sm:grid-cols-12">
-      {/* Name */}
-      <div className="sm:col-span-4">
-        <FormField
-          control={control}
-          name={`medications.${index}.name`}
-          render={({ field }) => (
-            <FormItem>
-              <FormControl>
-                <Input placeholder="Medicine Name" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
+    <div className="group relative rounded-lg border border-slate-200 bg-white p-4 transition-all hover:border-slate-300 focus-within:border-slate-400 focus-within:ring-1 focus-within:ring-slate-400">
+      <div className="grid gap-4 md:grid-cols-12">
+        {/* --- ROW 1: Medicine Details --- */}
 
-      {/* Dosage */}
-      <div className="sm:col-span-3">
-        <FormField
-          control={control}
-          name={`medications.${index}.dosage`}
-          render={({ field }) => (
-            <FormItem>
-              <FormControl>
-                <Input placeholder="Dosage (e.g. 500mg)" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
+        {/* Name */}
+        <div className="md:col-span-5">
+          <FormField
+            control={control}
+            name={`medications.${index}.name`}
+            render={({ field }) => (
+              <FormItem className="space-y-1.5">
+                <FormLabel className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                  Medicine
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="e.g. Amoxicillin"
+                    {...field}
+                    className="h-9 border-slate-200 focus-visible:ring-slate-400"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
-      {/* Quantity */}
-      <div className="sm:col-span-3">
-        <FormField
-          control={control}
-          name={`medications.${index}.quantity`}
-          render={({ field }) => (
-            <FormItem>
-              <FormControl>
-                <Input placeholder="Qty (e.g. 30 tabs)" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
+        {/* Dosage */}
+        <div className="md:col-span-4">
+          <FormField
+            control={control}
+            name={`medications.${index}.dosage`}
+            render={({ field }) => (
+              <FormItem className="space-y-1.5">
+                <FormLabel className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                  Dosage
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="e.g. 500mg"
+                    {...field}
+                    className="h-9 border-slate-200 focus-visible:ring-slate-400"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
-      {/* Instructions */}
-      <div className="sm:col-span-11">
-        <FormField
-          control={control}
-          name={`medications.${index}.instructions`}
-          render={({ field }) => (
-            <FormItem>
-              <FormControl>
-                <Input placeholder="Sig / Instructions" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
+        {/* Quantity */}
+        <div className="md:col-span-3">
+          <FormField
+            control={control}
+            name={`medications.${index}.quantity`}
+            render={({ field }) => (
+              <FormItem className="space-y-1.5">
+                <FormLabel className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                  Qty
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="e.g. 21 tabs"
+                    {...field}
+                    className="h-9 border-slate-200 focus-visible:ring-slate-400"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
-      {/* Delete Button */}
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        className="absolute right-2 top-2 h-8 w-8 text-slate-400 hover:text-red-500 sm:static sm:col-span-1 sm:h-10 sm:w-full"
-        onClick={() => onRemove(index)}
-        disabled={!canRemove}
-      >
-        <Trash2 className="h-4 w-4" />
-      </Button>
+        {/* --- ROW 2: Instructions & Actions --- */}
+
+        {/* Instructions (Spans most width) */}
+        <div className="md:col-span-11">
+          <FormField
+            control={control}
+            name={`medications.${index}.instructions`}
+            render={({ field }) => (
+              <FormItem className="space-y-1.5">
+                <FormLabel className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                  Sig / Instructions
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="e.g. Take 1 tablet every 8 hours for 7 days"
+                    {...field}
+                    className="h-9 border-slate-200 focus-visible:ring-slate-400"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Delete Button (Aligned to bottom right on desktop) */}
+        <div className="flex items-end justify-end md:col-span-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => onRemove(index)}
+            disabled={!canRemove}
+            className="h-9 w-9 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+            title="Remove medication"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

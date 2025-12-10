@@ -30,7 +30,7 @@ export default function BillingCard({ control, amount }: BillingCardProps) {
           Billing Information
         </CardTitle>
         <CardDescription className="text-sm">
-          Fee to appear in dashboard
+          Consultation fee details
         </CardDescription>
       </CardHeader>
       <CardContent className="pt-6">
