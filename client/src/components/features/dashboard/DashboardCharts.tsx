@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import {
   BarChart,
   Bar,
@@ -23,7 +23,8 @@ import {
 import type { WeeklyData, SourceData, MonthlyData } from "./types";
 import { TrendingUp, ArrowUpRight } from "lucide-react";
 
-export const WeeklyAnalysisChart = memo(({ data }: { data: WeeklyData[] }) => (
+export const WeeklyAnalysisChart = memo(
+  ({ data }: { data: WeeklyData[] }) => (
   <Card className="col-span-4 border-slate-200 shadow-sm">
     <CardHeader>
       <CardTitle>Weekly Analysis</CardTitle>
@@ -77,18 +78,33 @@ export const WeeklyAnalysisChart = memo(({ data }: { data: WeeklyData[] }) => (
       </div>
     </CardContent>
   </Card>
-));
+  ),
+  (prevProps, nextProps) => {
+    // Only re-render if data actually changed
+    if (prevProps.data.length !== nextProps.data.length) return false;
+    return prevProps.data.every(
+      (item, idx) =>
+        item.name === nextProps.data[idx].name &&
+        item.prescription === nextProps.data[idx].prescription &&
+        item.medCert === nextProps.data[idx].medCert,
+    );
+  },
+);
 
 WeeklyAnalysisChart.displayName = "WeeklyAnalysisChart";
 
 export const RevenueSourceChart = memo(
   ({ data, total }: { data: SourceData[]; total: number }) => {
-    // Transform data to match Recharts expected format
-    const chartData = data.map((item) => ({
-      name: item.name,
-      value: item.value,
-      color: item.color,
-    }));
+    // Transform data to match Recharts expected format - memoize transformation
+    const chartData = useMemo(
+      () =>
+        data.map((item) => ({
+          name: item.name,
+          value: item.value,
+          color: item.color,
+        })),
+      [data],
+    );
 
     return (
       <Card className="col-span-4 lg:col-span-3">
@@ -133,6 +149,17 @@ export const RevenueSourceChart = memo(
           </div>
         </CardContent>
       </Card>
+    );
+  },
+  (prevProps, nextProps) => {
+    // Only re-render if data or total changed
+    if (prevProps.total !== nextProps.total) return false;
+    if (prevProps.data.length !== nextProps.data.length) return false;
+    return prevProps.data.every(
+      (item, idx) =>
+        item.name === nextProps.data[idx].name &&
+        item.value === nextProps.data[idx].value &&
+        item.color === nextProps.data[idx].color,
     );
   },
 );
@@ -215,6 +242,14 @@ export const MonthlyGrowthChart = memo(({ data }: { data: MonthlyData[] }) => {
         </div>
       </CardContent>
     </Card>
+  );
+}, (prevProps, nextProps) => {
+  // Only re-render if data actually changed
+  if (prevProps.data.length !== nextProps.data.length) return false;
+  return prevProps.data.every(
+    (item, idx) =>
+      item.name === nextProps.data[idx].name &&
+      item.revenue === nextProps.data[idx].revenue,
   );
 });
 

@@ -28,8 +28,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import patientService from "@/services/patientService";
-import type { IPatient } from "@/types";
+import patientService from "@/features/patients/services/patientService";
+import type { IPatient } from "@/features/patients/types";
 import { useState } from "react";
 
 interface PatientTableRowProps {

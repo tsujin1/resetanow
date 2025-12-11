@@ -22,8 +22,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import type { MedCertValues } from "@/schemas/medCert";
-import type { IPatient } from "@/types";
+import type { MedCertValues } from "@/features/medcert/schemas/medCert";
+import type { IPatient } from "@/features/patients/types";
 
 interface PatientInfoCardProps {
   control: Control<MedCertValues>;

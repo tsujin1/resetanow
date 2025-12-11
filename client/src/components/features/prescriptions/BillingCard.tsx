@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import type { Control } from "react-hook-form";
-import type { PrescriptionValues } from "@/schemas/prescription";
+import type { PrescriptionValues } from "@/features/prescriptions/schemas/prescription";
 
 interface BillingCardProps {
   control: Control<PrescriptionValues>;
@@ -84,3 +84,4 @@ export default function BillingCard({ control, amount }: BillingCardProps) {
     </Card>
   );
 }
+

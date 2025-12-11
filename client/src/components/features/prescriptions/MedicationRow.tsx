@@ -9,7 +9,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import type { Control, FieldArrayWithId } from "react-hook-form";
-import type { PrescriptionValues } from "@/schemas/prescription";
+import type { PrescriptionValues } from "@/features/prescriptions/schemas/prescription";
 
 interface MedicationRowProps {
   control: Control<PrescriptionValues>;
@@ -142,3 +142,4 @@ export default function MedicationRow({
     </div>
   );
 }
+

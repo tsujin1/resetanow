@@ -17,7 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { Control } from "react-hook-form";
-import type { PrescriptionValues } from "@/schemas/prescription";
+import type { PrescriptionValues } from "@/features/prescriptions/schemas/prescription";
 
 interface RxDetailsCardProps {
   control: Control<PrescriptionValues>;
@@ -78,3 +78,4 @@ export default function RxDetailsCard({ control }: RxDetailsCardProps) {
     </Card>
   );
 }
+

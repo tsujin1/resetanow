@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
 import PatientTableRow from "./PatientTableRow";
-import type { IPatient } from "@/types";
+import type { IPatient } from "@/features/patients/types";
 
 interface PatientTableProps {
   patients: IPatient[];
@@ -97,3 +97,4 @@ export default function PatientTable({
     </Card>
   );
 }
+

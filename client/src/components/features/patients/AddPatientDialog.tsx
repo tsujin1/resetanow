@@ -29,7 +29,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Plus, Loader2 } from "lucide-react";
 import { useState } from "react";
-import patientService from "@/services/patientService";
+import patientService from "@/features/patients/services/patientService";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // 1. Schema Definition

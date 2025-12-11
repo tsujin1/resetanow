@@ -1,14 +1,16 @@
-import { Routes, Route, Navigate } from "react-router-dom"; // Removed 'BrowserRouter as Router'
+import { Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
-import AuthLayout from "./layouts/AuthLayout";
-import AppLayout from "./layouts/AppLayout";
-import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
-import Patients from "./pages/Patients";
-import CreateRx from "./pages/CreateRx";
-import CreateMedCert from "./pages/CreateMedCert";
-import Settings from "./pages/Settings";
-import Register from "./pages/Register";
+import AuthLayout from "@/shared/layouts/AuthLayout";
+import AppLayout from "@/shared/layouts/AppLayout";
+import PrivateRoute from "@/shared/components/PrivateRoute";
+import Login from "@/features/auth/pages/Login";
+import Register from "@/features/auth/pages/Register";
+import Dashboard from "@/features/dashboard/pages/Dashboard";
+import Patients from "@/features/patients/pages/Patients";
+import PatientHistory from "@/features/patients/pages/PatientHistory";
+import CreateRx from "@/features/prescriptions/pages/CreateRx";
+import CreateMedCert from "@/features/medcert/pages/CreateMedCert";
+import Settings from "@/features/settings/pages/Settings";
 
 function App() {
   return (
@@ -21,14 +23,16 @@ function App() {
           <Route path="/register" element={<Register />} />
         </Route>
 
-        {/* Private Application Routes */}
-        <Route element={<AppLayout />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/patients" element={<Patients />} />
-          {/* Added History Route */}
-          <Route path="/create-rx" element={<CreateRx />} />
-          <Route path="/create-mc" element={<CreateMedCert />} />
-          <Route path="/settings" element={<Settings />} />
+        {/* Private Application Routes - Protected by PrivateRoute */}
+        <Route element={<PrivateRoute />}>
+          <Route element={<AppLayout />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/patients" element={<Patients />} />
+            <Route path="/patients/:id/history" element={<PatientHistory />} />
+            <Route path="/create-rx" element={<CreateRx />} />
+            <Route path="/create-mc" element={<CreateMedCert />} />
+            <Route path="/settings" element={<Settings />} />
+          </Route>
         </Route>
 
         {/* Redirect root to Dashboard */}

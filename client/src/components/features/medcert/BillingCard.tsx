@@ -14,7 +14,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import type { MedCertValues } from "@/schemas/medCert";
+import type { MedCertValues } from "@/features/medcert/schemas/medCert";
 
 interface BillingInfoCardProps {
   control: Control<MedCertValues>;

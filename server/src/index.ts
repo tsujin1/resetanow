@@ -2,11 +2,11 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import morgan from "morgan";
-import { connectDB } from "./config/db";
-import authRoutes from "./routes/authRoutes";
-import patientRoutes from "./routes/patientRoutes";
-import prescriptionRoutes from "./routes/prescriptionRoutes";
-import medCertRoutes from "./routes/medCertRoutes";
+import { connectDB } from "./shared/config/db";
+import authRoutes from "./features/auth/routes/authRoutes";
+import patientRoutes from "./features/patients/routes/patientRoutes";
+import prescriptionRoutes from "./features/prescriptions/routes/prescriptionRoutes";
+import medCertRoutes from "./features/medcert/routes/medCertRoutes";
 
 dotenv.config();
 connectDB();

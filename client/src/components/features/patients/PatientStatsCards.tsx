@@ -1,6 +1,6 @@
 import { Users, Calendar, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { IPatient } from "@/types";
+import type { IPatient } from "@/features/patients/types";
 
 interface PatientStatsCardsProps {
   patients: IPatient[];
@@ -93,3 +93,4 @@ export default function PatientStatsCards({
     </div>
   );
 }
+

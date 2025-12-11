@@ -22,8 +22,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import type { IPatient } from "@/types";
-import type { PrescriptionValues } from "@/schemas/prescription";
+import type { IPatient } from "@/features/patients/types";
+import type { PrescriptionValues } from "@/features/prescriptions/schemas/prescription";
 
 interface PatientSelectionCardProps {
   control: Control<PrescriptionValues>;
@@ -169,3 +169,4 @@ export default function PatientSelectionCard({
     </Card>
   );
 }
+
