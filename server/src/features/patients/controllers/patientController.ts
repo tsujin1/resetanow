@@ -1,16 +1,12 @@
 import { Request, Response } from "express";
-import { Patient } from "../models/Patient";
-import { Prescription } from "../../prescriptions/models/Prescription";
-import { MedCert } from "../../medcert/models/MedCert";
+import { PatientService } from "../services/patientService";
 
 // @desc    Get all patients for the authenticated doctor
 // @route   GET /api/patients
 // @access  Private
 export const getPatients = async (req: Request, res: Response) => {
   try {
-    const patients = await Patient.find({ doctor: (req as any).user._id })
-      .sort({ createdAt: -1 });
-
+    const patients = await PatientService.getPatientsByDoctor((req as any).user._id);
     res.json(patients);
   } catch (error) {
     console.error("Error fetching patients:", error);
@@ -23,10 +19,10 @@ export const getPatients = async (req: Request, res: Response) => {
 // @access  Private
 export const getPatientById = async (req: Request, res: Response) => {
   try {
-    const patient = await Patient.findOne({
-      _id: req.params.id,
-      doctor: (req as any).user._id,
-    });
+    const patient = await PatientService.getPatientById(
+      req.params.id,
+      (req as any).user._id,
+    );
 
     if (!patient) {
       res.status(404).json({ message: "Patient not found" });
@@ -60,14 +56,13 @@ export const createPatient = async (req: Request, res: Response) => {
       return;
     }
 
-    const patient = await Patient.create({
-      doctor: (req as any).user._id,
+    const patient = await PatientService.createPatient((req as any).user._id, {
       name,
       age,
       gender,
       address,
       contactNumber,
-      lastVisit: lastVisit ? new Date(lastVisit) : new Date(),
+      lastVisit,
     });
 
     res.status(201).json(patient);
@@ -82,33 +77,22 @@ export const createPatient = async (req: Request, res: Response) => {
 // @access  Private
 export const updatePatient = async (req: Request, res: Response) => {
   try {
-    const patient = await Patient.findOne({
-      _id: req.params.id,
-      doctor: (req as any).user._id,
-    });
+    if (req.body.gender !== undefined && !["Male", "Female"].includes(req.body.gender)) {
+      res.status(400).json({ message: "Gender must be either 'Male' or 'Female'" });
+      return;
+    }
 
-    if (!patient) {
+    const updatedPatient = await PatientService.updatePatient(
+      req.params.id,
+      (req as any).user._id,
+      req.body,
+    );
+
+    if (!updatedPatient) {
       res.status(404).json({ message: "Patient not found" });
       return;
     }
 
-    // Update fields
-    if (req.body.name !== undefined) patient.name = req.body.name;
-    if (req.body.age !== undefined) patient.age = req.body.age;
-    if (req.body.gender !== undefined) {
-      if (!["Male", "Female"].includes(req.body.gender)) {
-        res.status(400).json({ message: "Gender must be either 'Male' or 'Female'" });
-        return;
-      }
-      patient.gender = req.body.gender;
-    }
-    if (req.body.address !== undefined) patient.address = req.body.address;
-    if (req.body.contactNumber !== undefined) patient.contactNumber = req.body.contactNumber;
-    if (req.body.lastVisit !== undefined) {
-      patient.lastVisit = new Date(req.body.lastVisit);
-    }
-
-    const updatedPatient = await patient.save();
     res.json(updatedPatient);
   } catch (error) {
     console.error("Error updating patient:", error);
@@ -121,17 +105,16 @@ export const updatePatient = async (req: Request, res: Response) => {
 // @access  Private
 export const deletePatient = async (req: Request, res: Response) => {
   try {
-    const patient = await Patient.findOne({
-      _id: req.params.id,
-      doctor: (req as any).user._id,
-    });
+    const deleted = await PatientService.deletePatient(
+      req.params.id,
+      (req as any).user._id,
+    );
 
-    if (!patient) {
+    if (!deleted) {
       res.status(404).json({ message: "Patient not found" });
       return;
     }
 
-    await Patient.deleteOne({ _id: req.params.id });
     res.json({ message: "Patient deleted successfully" });
   } catch (error) {
     console.error("Error deleting patient:", error);
@@ -144,36 +127,17 @@ export const deletePatient = async (req: Request, res: Response) => {
 // @access  Private
 export const getPatientHistory = async (req: Request, res: Response) => {
   try {
-    const patient = await Patient.findOne({
-      _id: req.params.id,
-      doctor: (req as any).user._id,
-    });
-
-    if (!patient) {
+    const history = await PatientService.getPatientHistory(
+      req.params.id,
+      (req as any).user._id,
+    );
+    res.json(history);
+  } catch (error) {
+    console.error("Error fetching patient history:", error);
+    if ((error as Error).message === "Patient not found") {
       res.status(404).json({ message: "Patient not found" });
       return;
     }
-
-    // Fetch prescriptions and med certs for this patient
-    const prescriptions = await Prescription.find({
-      patientId: req.params.id,
-      doctor: (req as any).user._id,
-    })
-      .sort({ date: -1 });
-
-    const medCerts = await MedCert.find({
-      patientId: req.params.id,
-      doctor: (req as any).user._id,
-    })
-      .sort({ date: -1 });
-
-    res.json({
-      patient,
-      prescriptions,
-      medCerts,
-    });
-  } catch (error) {
-    console.error("Error fetching patient history:", error);
     res.status(500).json({ message: "Server error" });
   }
 };

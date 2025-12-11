@@ -15,11 +15,11 @@ import type { IPatient } from "@/features/patients/types";
 import { medCertSchema, type MedCertValues } from "@/features/medcert/schemas/medCert";
 
 // Import components
-import { PatientInfoCard } from "@/components/features/medcert/PatientInfoCard";
-import { ClinicalInfoCard } from "@/components/features/medcert/ClinicalCard";
-import { BillingInfoCard } from "@/components/features/medcert/BillingCard";
-import MedCertHeader from "@/components/features/medcert/MedCertHeader";
-import MedCertActionButtons from "@/components/features/medcert/MedCertActionButtons";
+import { PatientInfoCard } from "@/features/medcert/components/PatientInfoCard";
+import { ClinicalInfoCard } from "@/features/medcert/components/ClinicalCard";
+import { BillingInfoCard } from "@/features/medcert/components/BillingCard";
+import MedCertHeader from "@/features/medcert/components/MedCertHeader";
+import MedCertActionButtons from "@/features/medcert/components/MedCertActionButtons";
 import { MedCertTemplate } from "@/shared/templates/MedCertTemplate";
 
 export default function CreateMedCert() {

@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import AddPatientDialog from "@/components/features/patients/AddPatientDialog";
-import PatientHeader from "@/components/features/patients/PatientHeader";
-import PatientStatsCards from "@/components/features/patients/PatientStatsCards";
-import PatientSearchBar from "@/components/features/patients/PatientSearchBar";
-import PatientTable from "@/components/features/patients/PatientTable";
+import AddPatientDialog from "@/features/patients/components/AddPatientDialog";
+import PatientHeader from "@/features/patients/components/PatientHeader";
+import PatientStatsCards from "@/features/patients/components/PatientStatsCards";
+import PatientSearchBar from "@/features/patients/components/PatientSearchBar";
+import PatientTable from "@/features/patients/components/PatientTable";
 import patientService from "@/features/patients/services/patientService";
 import type { IPatient } from "@/features/patients/types";
 

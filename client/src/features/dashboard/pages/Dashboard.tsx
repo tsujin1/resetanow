@@ -2,12 +2,12 @@ import { lazy, Suspense } from "react";
 import { LayoutDashboard, Calendar, Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useDashboardData } from "@/features/dashboard/hooks/useDashboardData";
-import { DashboardMetricsCards } from "@/components/features/dashboard/DashboardMetrics";
+import { DashboardMetricsCards } from "@/features/dashboard/components/DashboardMetrics";
 
 // Lazy load chart components to reduce initial bundle size
 const WeeklyAnalysisChart = lazy(
   () =>
-    import("@/components/features/dashboard/DashboardCharts").then(
+    import("@/features/dashboard/components/DashboardCharts").then(
       (module) => ({
         default: module.WeeklyAnalysisChart,
       }),
@@ -15,7 +15,7 @@ const WeeklyAnalysisChart = lazy(
 );
 const RevenueSourceChart = lazy(
   () =>
-    import("@/components/features/dashboard/DashboardCharts").then(
+    import("@/features/dashboard/components/DashboardCharts").then(
       (module) => ({
         default: module.RevenueSourceChart,
       }),
@@ -23,7 +23,7 @@ const RevenueSourceChart = lazy(
 );
 const MonthlyGrowthChart = lazy(
   () =>
-    import("@/components/features/dashboard/DashboardCharts").then(
+    import("@/features/dashboard/components/DashboardCharts").then(
       (module) => ({
         default: module.MonthlyGrowthChart,
       }),

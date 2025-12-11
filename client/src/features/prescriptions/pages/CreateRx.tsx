@@ -21,12 +21,12 @@ import {
 } from "@/features/prescriptions/schemas/prescription";
 
 // --- IMPORT FEATURES ---
-import RxHeader from "@/components/features/prescriptions/RxHeader";
-import RxActionButtons from "@/components/features/prescriptions/RxActionButtons";
-import PatientSelectionCard from "@/components/features/prescriptions/PatientSelectionCard";
-import MedicationsCard from "@/components/features/prescriptions/MedicationsCard";
-import RxDetailsCard from "@/components/features/prescriptions/RxDetailsCard";
-import BillingCard from "@/components/features/prescriptions/BillingCard";
+import RxHeader from "@/features/prescriptions/components/RxHeader";
+import RxActionButtons from "@/features/prescriptions/components/RxActionButtons";
+import PatientSelectionCard from "@/features/prescriptions/components/PatientSelectionCard";
+import MedicationsCard from "@/features/prescriptions/components/MedicationsCard";
+import RxDetailsCard from "@/features/prescriptions/components/RxDetailsCard";
+import BillingCard from "@/features/prescriptions/components/BillingCard";
 import { RxTemplate } from "@/shared/templates/RxTemplate";
 
 export default function CreateRx() {

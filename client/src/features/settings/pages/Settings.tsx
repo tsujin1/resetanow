@@ -11,10 +11,10 @@ import { Form } from "@/components/ui/form";
 import { toast } from "sonner";
 
 // Import our sub-components
-import { ProfileCard } from "@/components/features/settings/ProfileCard";
-import { ClinicCard } from "@/components/features/settings/ClinicCard";
-import { LegalCard } from "@/components/features/settings/LegalCard";
-import { SignatureCard } from "@/components/features/settings/SignatureCard";
+import { ProfileCard } from "@/features/settings/components/ProfileCard";
+import { ClinicCard } from "@/features/settings/components/ClinicCard";
+import { LegalCard } from "@/features/settings/components/LegalCard";
+import { SignatureCard } from "@/features/settings/components/SignatureCard";
 
 // 1. UPDATE SCHEMA
 const settingsSchema = z.object({
