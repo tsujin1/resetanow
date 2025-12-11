@@ -40,7 +40,7 @@ export default function PatientSelectionCard({
 }: PatientSelectionCardProps) {
   return (
     <Card className="border-slate-200 shadow-sm">
-      <CardHeader className="border-b border-slate-100 bg-white pb-4">
+      <CardHeader className="border-b border-slate-100 bg-slate-50/50 pb-4">
         <CardTitle className="text-base font-semibold text-slate-900">
           Patient Information
         </CardTitle>

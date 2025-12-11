@@ -8,6 +8,7 @@ export interface IDoctor {
   email: string;
   contactNumber: string;
   clinicAddress: string;
+  clinicAvailability: string;
   licenseNo: string;
   ptrNo: string;
   s2No?: string; // Optional

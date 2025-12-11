@@ -38,6 +38,7 @@ export default function CreateRx() {
   const [isSaving, setIsSaving] = useState(false);
   const [patients, setPatients] = useState<IPatient[]>([]);
   const [isLoadingPatients, setIsLoadingPatients] = useState(true);
+  const [isUserLoaded, setIsUserLoaded] = useState(false);
 
   // URL Params
   const [searchParams] = useSearchParams();
@@ -65,8 +66,15 @@ export default function CreateRx() {
   const values = useWatch({ control: form.control });
   const selectedPatient = patients.find((p) => p._id === values.patientId);
 
+  // Track when user data is loaded
+  useEffect(() => {
+    if (user !== undefined) {
+      setIsUserLoaded(true);
+    }
+  }, [user]);
+
   // Logic: Disable download if no patient is selected
-  const canDownload = !!selectedPatient && !isLoadingPatients;
+  const canDownload = !!selectedPatient && !isLoadingPatients && isUserLoaded;
 
   // Fetch Patients
   useEffect(() => {
@@ -99,7 +107,8 @@ export default function CreateRx() {
   // PDF Generation
   const handleDownloadPdf = async () => {
     const element = componentRef.current;
-    if (!element) return;
+    if (!element || !selectedPatient || !isUserLoaded) return;
+
     setIsGenerating(true);
 
     try {
@@ -166,6 +175,37 @@ export default function CreateRx() {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  // Safe doctor data with fallbacks - UPDATED to match RxTemplate requirements
+  // Note: Using 'role' as 'specialty' since the error indicates RxTemplate expects 'specialty'
+  const safeDoctorData = {
+    name: user?.name || "",
+    title: user?.title || "",
+    specialty: user?.role || "", // Changed from 'role' to 'specialty' to match RxTemplate type
+    licenseNo: user?.licenseNo || "",
+    ptrNo: user?.ptrNo || "",
+    s2No: user?.s2No || "",
+    signatureUrl: user?.signatureUrl || "",
+    clinicAddress: user?.clinicAddress || "",
+    contactNumber: user?.contactNumber || "",
+    clinicAvailability: user?.clinicAvailability || "",
+  };
+
+  // Safe patient data with fallbacks
+  const safePatientData = {
+    patientName: selectedPatient?.name || "",
+    age: selectedPatient?.age || "",
+    sex: selectedPatient?.gender || "",
+    address: selectedPatient?.address || "",
+    date: values.date || "",
+    diagnosis: values.diagnosis || "",
+    medications: (values.medications || []).map((m) => ({
+      name: m.name || "",
+      dosage: m.dosage || "",
+      instructions: m.instructions || "",
+      quantity: m.quantity || "",
+    })),
   };
 
   return (
@@ -238,31 +278,13 @@ export default function CreateRx() {
           backgroundColor: "#ffffff",
         }}
       >
-        <RxTemplate
-          ref={componentRef}
-          data={{
-            patientName: selectedPatient?.name,
-            age: selectedPatient?.age,
-            sex: selectedPatient?.gender,
-            address: selectedPatient?.address,
-            date: values.date || "",
-            diagnosis: values.diagnosis,
-            medications: (values.medications || []).map((m) => ({
-              name: m.name || "",
-              dosage: m.dosage || "",
-              instructions: m.instructions || "",
-              quantity: m.quantity || "",
-            })),
-          }}
-          doctor={{
-            name: user?.name || "",
-            title: user?.title || "",
-            specialty: user?.role || "",
-            licenseNo: user?.licenseNo || "",
-            ptrNo: user?.ptrNo || "",
-            signatureUrl: user?.signatureUrl,
-          }}
-        />
+        {isUserLoaded && (
+          <RxTemplate
+            ref={componentRef}
+            data={safePatientData}
+            doctor={safeDoctorData}
+          />
+        )}
       </div>
     </div>
   );

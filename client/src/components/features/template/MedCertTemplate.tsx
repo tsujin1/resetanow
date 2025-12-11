@@ -30,6 +30,7 @@ interface MedCertTemplateProps {
     email: string;
     licenseNo: string;
     ptrNo: string;
+    s2No?: string;
     signatureUrl?: string | null;
   };
 }
@@ -386,15 +387,21 @@ export const MedCertTemplate = forwardRef<HTMLDivElement, MedCertTemplateProps>(
               }}
             >
               {doctor.signatureUrl && (
-                <img
-                  src={doctor.signatureUrl}
-                  alt="Signature"
-                  style={{
-                    maxHeight: "100%",
-                    maxWidth: "100%",
-                    mixBlendMode: "multiply",
-                  }}
-                />
+                <div className="relative w-full flex justify-center items-end">
+                  <img
+                    src={doctor.signatureUrl}
+                    alt="Signature"
+                    style={{
+                      height: "auto",
+                      maxHeight: "60px",
+                      width: "auto",
+                      maxWidth: "300px",
+                      objectFit: "contain",
+                      objectPosition: "center bottom",
+                      mixBlendMode: "multiply",
+                    }}
+                  />
+                </div>
               )}
             </div>
             <div
@@ -420,9 +427,9 @@ export const MedCertTemplate = forwardRef<HTMLDivElement, MedCertTemplateProps>(
                 Lic No. {doctor.licenseNo}
               </span>
               <span style={{ display: "block" }}>PTR No. {doctor.ptrNo}</span>
-              {doctor.s2No && (
-                <span style={{ display: "block" }}>S2 No. {doctor.s2No}</span>
-              )}
+              <span style={{ display: "block" }}>
+                S2 No. {doctor.s2No || "N/A"}
+              </span>
             </div>
           </div>
         </div>

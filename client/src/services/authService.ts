@@ -65,11 +65,13 @@ const getProfile = async () => {
     if (error instanceof AxiosError && error.response?.status === 404) {
       const user = getStoredUser();
       if (user) {
+        // Return stored user with all default fields to prevent UI errors
         return {
           title: "",
           role: "",
           contactNumber: "",
           clinicAddress: "",
+          clinicAvailability: "", // <--- ADDED HERE
           licenseNo: "",
           ptrNo: "",
           s2No: "",

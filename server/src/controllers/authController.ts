@@ -84,6 +84,7 @@ export const getProfile = async (req: Request, res: Response) => {
         role: doctor.role,
         contactNumber: doctor.contactNumber,
         clinicAddress: doctor.clinicAddress,
+        clinicAvailability: doctor.clinicAvailability, // <--- ADDED HERE
         licenseNo: doctor.licenseNo,
         ptrNo: doctor.ptrNo,
         s2No: doctor.s2No,
@@ -111,6 +112,7 @@ export const updateProfile = async (req: Request, res: Response) => {
       doctor.role = req.body.role || doctor.role;
       doctor.contactNumber = req.body.contactNumber || doctor.contactNumber;
       doctor.clinicAddress = req.body.clinicAddress || doctor.clinicAddress;
+      doctor.clinicAvailability = req.body.clinicAvailability || doctor.clinicAvailability; // <--- ADDED HERE
       doctor.licenseNo = req.body.licenseNo || doctor.licenseNo;
       doctor.ptrNo = req.body.ptrNo || doctor.ptrNo;
       doctor.s2No = req.body.s2No || doctor.s2No;
@@ -126,6 +128,7 @@ export const updateProfile = async (req: Request, res: Response) => {
         role: updatedDoctor.role,
         contactNumber: updatedDoctor.contactNumber,
         clinicAddress: updatedDoctor.clinicAddress,
+        clinicAvailability: updatedDoctor.clinicAvailability, // <--- ADDED HERE
         licenseNo: updatedDoctor.licenseNo,
         ptrNo: updatedDoctor.ptrNo,
         s2No: updatedDoctor.s2No,

@@ -37,14 +37,14 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <Button variant="outline">
             <Calendar className="mr-2 h-4 w-4" /> Last 30 Days
           </Button>
           <Button
             onClick={exportCSV}
             disabled={isLoading || isExporting}
-            className="relative"
+            className="relative w-full sm:w-auto"
           >
             {isExporting ? (
               <>

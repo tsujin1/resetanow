@@ -29,29 +29,61 @@ export function ClinicCard() {
           <CardTitle className="text-base font-semibold text-slate-900">
             Clinic Details
           </CardTitle>
-          <CardDescription className="text-sm">
-            Physical location of your practice
+          <CardDescription className="text-sm text-slate-500">
+            Physical location and operating hours
           </CardDescription>
         </div>
       </CardHeader>
+
       <CardContent className="pt-6">
-        <FormField
-          control={control}
-          name="clinicAddress"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-slate-700">Address Line</FormLabel>
-              <FormControl>
-                <Textarea
-                  className="resize-none min-h-20"
-                  placeholder="Unit 123, Building Name, Street, City"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {/* Grid Layout: 12 columns for desktop, single column for mobile */}
+        <div className="grid gap-6 md:grid-cols-12">
+          {/* Address Field (Wider - 7 cols) */}
+          <div className="md:col-span-7">
+            <FormField
+              control={control}
+              name="clinicAddress"
+              render={({ field }) => (
+                <FormItem className="space-y-2">
+                  <FormLabel className="text-sm font-semibold text-slate-700">
+                    Clinic Address
+                  </FormLabel>
+                  <FormControl>
+                    <Textarea
+                      className="resize-none min-h-[5.5rem] bg-white border-slate-200 focus:border-slate-400 focus:ring-0"
+                      placeholder="Unit 123, Building Name, Street, City"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {/* Availability Field (Narrower - 5 cols) */}
+          <div className="md:col-span-5">
+            <FormField
+              control={control}
+              name="clinicAvailability"
+              render={({ field }) => (
+                <FormItem className="space-y-2">
+                  <FormLabel className="text-sm font-semibold text-slate-700">
+                    Availability / Schedule
+                  </FormLabel>
+                  <FormControl>
+                    <Textarea
+                      className="resize-none min-h-[5.5rem] bg-white border-slate-200 focus:border-slate-400 focus:ring-0"
+                      placeholder="e.g. Mon - Sat: 9:00 AM - 5:00 PM"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
       </CardContent>
     </Card>
   );

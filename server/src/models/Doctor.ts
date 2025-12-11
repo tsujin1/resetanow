@@ -10,7 +10,10 @@ const DoctorSchema = new mongoose.Schema({
   title: { type: String, default: "" },
   role: { type: String, default: "General Physician" },
   contactNumber: { type: String, default: "" },
+
+  // Clinic Details
   clinicAddress: { type: String, default: "" },
+  clinicAvailability: { type: String, default: "" }, // <--- ADDED HERE
 
   // Legal Details
   licenseNo: { type: String, default: "" },

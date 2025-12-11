@@ -10,19 +10,24 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { toast } from "sonner";
 
-// Import our new sub-components
+// Import our sub-components
 import { ProfileCard } from "@/components/features/settings/ProfileCard";
 import { ClinicCard } from "@/components/features/settings/ClinicCard";
 import { LegalCard } from "@/components/features/settings/LegalCard";
 import { SignatureCard } from "@/components/features/settings/SignatureCard";
 
+// 1. UPDATE SCHEMA
 const settingsSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   title: z.string().optional(),
   role: z.string().optional(),
   email: z.string().email("Please enter a valid email."),
   contactNumber: z.string().optional(),
+
+  // Clinic Fields
   clinicAddress: z.string().optional(),
+  clinicAvailability: z.string().optional(),
+
   licenseNo: z.string().min(1, "License number is required.").or(z.literal("")),
   ptrNo: z.string().optional(),
   s2No: z.string().optional(),
@@ -33,6 +38,7 @@ type SettingsValues = z.infer<typeof settingsSchema>;
 export default function Settings() {
   const [signaturePreview, setSignaturePreview] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(false); // Track initial load
   const sigCanvasRef = useRef<SignatureCanvas>(null);
   const { user, setUser } = useContext(AuthContext)!;
 
@@ -46,38 +52,85 @@ export default function Settings() {
       email: "",
       contactNumber: "",
       clinicAddress: "",
+      clinicAvailability: "",
       licenseNo: "",
       ptrNo: "",
       s2No: "",
     },
   });
 
-  // --- FETCH DATA ---
+  // --- FETCH DATA (only on mount) ---
   useEffect(() => {
     const fetchProfile = async () => {
+      if (hasLoaded) return; // Prevent re-fetching
+
       try {
         const data = await authService.getProfile();
-        form.reset({
+
+        // Create the reset data object
+        const resetData = {
           name: data.name || "",
           title: data.title || "",
           role: data.role || "",
           email: data.email || "",
           contactNumber: data.contactNumber || "",
           clinicAddress: data.clinicAddress || "",
+          clinicAvailability: data.clinicAvailability || "",
           licenseNo: data.licenseNo || "",
           ptrNo: data.ptrNo || "",
           s2No: data.s2No || "",
-        });
+        };
 
+        // Reset form with fetched data
+        form.reset(resetData);
+
+        // Set signature preview if exists
         if (data.signatureUrl) {
           setSignaturePreview(data.signatureUrl);
         }
+
+        setHasLoaded(true);
       } catch (error) {
         console.error("Failed to load profile", error);
+        toast.error("Failed to load profile data");
       }
     };
+
     fetchProfile();
-  }, [form]);
+  }, [form, hasLoaded]);
+
+  // --- SYNC FORM WITH CONTEXT (when context changes externally) ---
+  useEffect(() => {
+    if (!user || hasLoaded) return;
+
+    // Only sync if form hasn't been manually modified
+    // You can add more sophisticated dirty checking here
+    const currentValues = form.getValues();
+    const isFormEmpty = Object.values(currentValues).every(
+      (val) => val === "" || val === undefined,
+    );
+
+    if (isFormEmpty && user) {
+      const userData = {
+        name: user.name || "",
+        title: user.title || "",
+        role: user.role || "",
+        email: user.email || "",
+        contactNumber: user.contactNumber || "",
+        clinicAddress: user.clinicAddress || "",
+        clinicAvailability: user.clinicAvailability || "",
+        licenseNo: user.licenseNo || "",
+        ptrNo: user.ptrNo || "",
+        s2No: user.s2No || "",
+      };
+
+      form.reset(userData);
+      if (user.signatureUrl) {
+        setSignaturePreview(user.signatureUrl);
+      }
+      setHasLoaded(true);
+    }
+  }, [user, form, hasLoaded]);
 
   // --- SIGNATURE HANDLERS ---
   const clearSignature = () => {
@@ -98,6 +151,7 @@ export default function Settings() {
     toast.dismiss();
 
     try {
+      // 1. Prepare Payload
       let finalSignature = signaturePreview;
       if (sigCanvasRef.current && !sigCanvasRef.current.isEmpty()) {
         finalSignature = sigCanvasRef.current.toDataURL("image/png");
@@ -105,48 +159,53 @@ export default function Settings() {
 
       const payload = {
         ...data,
-        signatureUrl: finalSignature || null,
+        signatureUrl: finalSignature || "",
       };
 
+      // 2. Send to Backend
       const result = await authService.updateProfile(payload);
-      setSignaturePreview(result.signatureUrl);
 
-      if (user && setUser) {
-        setUser({
-          ...user,
-          name: data.name,
-          email: data.email,
-          title: data.title || user.title,
-          contactNumber: data.contactNumber || user.contactNumber,
-          // Add other fields that should update in sidebar
-          clinicAddress: data.clinicAddress || user.clinicAddress,
-        });
-
-        // Also update localStorage for persistence
-        const storedUser = localStorage.getItem("user");
-        if (storedUser) {
-          const userObj = JSON.parse(storedUser);
-          const updatedUser = {
-            ...userObj,
-            name: data.name,
-            email: data.email,
-            title: data.title || userObj.title,
-            contactNumber: data.contactNumber || userObj.contactNumber,
-            clinicAddress: data.clinicAddress || userObj.clinicAddress,
-          };
-          localStorage.setItem("user", JSON.stringify(updatedUser));
-        }
+      // 3. Update Local Preview
+      if (result.signatureUrl) {
+        setSignaturePreview(result.signatureUrl);
       }
 
+      // 4. Update Global Context & Local Storage
+      if (user && setUser) {
+        const updatedUserLocal = {
+          ...user,
+          // Update all fields from form data
+          name: data.name,
+          email: data.email,
+          title: data.title || "",
+          role: data.role || "",
+          contactNumber: data.contactNumber || "",
+          clinicAddress: data.clinicAddress || "",
+          clinicAvailability: data.clinicAvailability || "",
+          licenseNo: data.licenseNo || "",
+          ptrNo: data.ptrNo || "",
+          s2No: data.s2No || "",
+          // Update signature
+          signatureUrl: result.signatureUrl || user.signatureUrl || "",
+        };
+
+        // Update State
+        setUser(updatedUserLocal);
+
+        // Update Local Storage
+        localStorage.setItem("user", JSON.stringify(updatedUserLocal));
+      }
+
+      // 5. Show success message
       toast.success("Settings updated successfully", {
         description: "Your profile information has been saved.",
       });
+
+      // 6. Mark form as clean (optional, if using formState.isDirty)
+      form.reset(data, { keepValues: true });
     } catch (error) {
       console.error("Failed to save settings:", error);
-
-      toast.error("Failed to save settings", {
-        description: "Please check your connection and try again.",
-      });
+      toast.error("Failed to save settings");
     } finally {
       setIsSaving(false);
     }
@@ -173,7 +232,10 @@ export default function Settings() {
         </div>
 
         <div className="hidden sm:block">
-          <Button onClick={form.handleSubmit(onSubmit)} disabled={isSaving}>
+          <Button
+            onClick={form.handleSubmit(onSubmit)}
+            disabled={isSaving || !hasLoaded}
+          >
             {isSaving ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
@@ -212,7 +274,7 @@ export default function Settings() {
             <Button
               onClick={form.handleSubmit(onSubmit)}
               size="lg"
-              disabled={isSaving}
+              disabled={isSaving || !hasLoaded}
               className="w-full shadow-md"
             >
               {isSaving ? (

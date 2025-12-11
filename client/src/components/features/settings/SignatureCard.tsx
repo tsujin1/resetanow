@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 import { useState } from "react";
 import SignatureCanvas from "react-signature-canvas";
 import { Upload, X, PenTool, Eraser, FileBadge } from "lucide-react";

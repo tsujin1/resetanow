@@ -24,7 +24,12 @@ export interface RxTemplateProps {
     specialty: string;
     licenseNo: string;
     ptrNo: string;
-    signatureUrl?: string | null; // Added this field
+    s2No: string;
+    signatureUrl?: string | null;
+    // ADDED NEW FIELDS
+    clinicAddress?: string;
+    contactNumber?: string;
+    clinicAvailability?: string;
   };
 }
 
@@ -83,8 +88,27 @@ export const RxTemplate = forwardRef<HTMLDivElement, RxTemplateProps>(
                 {doctor.specialty}
               </p>
               <div className="text-[10px] mt-2 text-slate-500 font-sans leading-tight">
-                <p>Clinic Address: City Hospital, Suite 404</p>
-                <p>Tel: (02) 8123-4567 • Mon-Sat 8am-5pm</p>
+                {/* Dynamically render address or default */}
+                {doctor.clinicAddress ? (
+                  <p>{doctor.clinicAddress}</p>
+                ) : (
+                  <p className="italic opacity-50">Clinic Address Not Set</p>
+                )}
+
+                <div className="flex items-center gap-2">
+                  {/* Contact Number */}
+                  {doctor.contactNumber && <p>Ph: {doctor.contactNumber}</p>}
+
+                  {/* Separator if both exist */}
+                  {doctor.contactNumber && doctor.clinicAvailability && (
+                    <span>•</span>
+                  )}
+
+                  {/* Availability */}
+                  {doctor.clinicAvailability && (
+                    <p>{doctor.clinicAvailability}</p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -180,23 +204,36 @@ export const RxTemplate = forwardRef<HTMLDivElement, RxTemplateProps>(
               <div className="w-[60%] text-center relative">
                 {/* SIGNATURE IMAGE */}
                 {doctor.signatureUrl && (
-                  <img
-                    src={doctor.signatureUrl}
-                    alt="Signature"
-                    className="h-16 w-auto object-contain mx-auto absolute bottom-8 left-0 right-0"
-                  />
+                  <div className="relative w-full flex justify-center items-end h-16 mb-1">
+                    <img
+                      src={doctor.signatureUrl}
+                      alt="Signature"
+                      className="max-h-full w-auto max-w-full object-contain"
+                      style={{
+                        maxHeight: "3.5rem", // Slightly smaller than container to prevent overflow
+                        objectFit: "contain",
+                        objectPosition: "center bottom",
+                      }}
+                    />
+                  </div>
                 )}
 
                 {/* Signature Line */}
-                <div className="border-b border-slate-900 mb-1 h-10 mt-6 relative z-10"></div>
+                <div className="border-b border-slate-900 mb-1 h-px mt-1 relative z-10"></div>
 
-                {/* Name */}
-                <p className="font-bold uppercase text-xs">{doctor.name}</p>
+                {/* Name and Title */}
+                <p className="font-bold uppercase text-xs">
+                  {doctor.name}
+                  {doctor.title && (
+                    <span className="normal-case">, {doctor.title}</span>
+                  )}
+                </p>
 
                 {/* License Numbers (Directly Under Name) */}
                 <div className="text-[8px] text-slate-500 font-sans leading-tight mt-1">
                   <p>Lic No: {doctor.licenseNo}</p>
                   <p>PTR No: {doctor.ptrNo}</p>
+                  <p>S2 No: {doctor.s2No}</p>
                 </div>
               </div>
             </div>
