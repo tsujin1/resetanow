@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 import { createContext, useState, useEffect, type ReactNode } from "react";
 import authService from "@/features/auth/services/authService";
 import type { IDoctor } from "@/features/settings/types";
@@ -14,11 +15,14 @@ interface AuthContextType {
   refreshUser: () => Promise<void>;
 }
 
-// FIX: Silence the Fast Refresh warning for this specific export
-// eslint-disable-next-line react-refresh/only-export-components
-export const AuthContext = createContext<AuthContextType | null>(null);
+// Create context - exported separately to avoid Fast Refresh issues
+const AuthContext = createContext<AuthContextType | null>(null);
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
+// Export context for use in components
+export { AuthContext };
+
+// Provider component - default export for Fast Refresh compatibility
+export default function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<IDoctor | null>(null);
   const [isLoading, setIsLoading] = useState(true); // Start with true to check auth on mount
   const [isError, setIsError] = useState(false);
@@ -96,12 +100,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsError(false);
     try {
       const data = await authService.login(userData);
-      
       // Validate response has required fields
       if (!data || !data.token || !data._id || !data.email) {
         throw new Error("Invalid login response from server");
       }
-      
       setUser(data);
     } catch (error: unknown) {
       setIsError(true);
@@ -147,4 +149,4 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       {children}
     </AuthContext.Provider>
   );
-};
+}
