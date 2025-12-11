@@ -5,6 +5,7 @@ import AppLayout from "@/shared/layouts/AppLayout";
 import PrivateRoute from "@/shared/components/PrivateRoute";
 import Login from "@/features/auth/pages/Login";
 import Register from "@/features/auth/pages/Register";
+import ResetPassword from "@/features/auth/pages/ResetPassword";
 import Dashboard from "@/features/dashboard/pages/Dashboard";
 import Patients from "@/features/patients/pages/Patients";
 import PatientHistory from "@/features/patients/pages/PatientHistory";
@@ -21,6 +22,7 @@ function App() {
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
         </Route>
 
         {/* Private Application Routes - Protected by PrivateRoute */}

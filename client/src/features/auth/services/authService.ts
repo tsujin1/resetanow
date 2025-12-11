@@ -111,12 +111,28 @@ const updateProfile = async (data: Partial<IDoctor>) => {
   }
 };
 
+const forgotPassword = async (email: string) => {
+  const response = await axios.post(API_URL + "auth/forgot-password", { email });
+  return response.data;
+};
+
+const resetPassword = async (token: string, email: string, password: string) => {
+  const response = await axios.post(API_URL + "auth/reset-password", {
+    token,
+    email,
+    password,
+  });
+  return response.data;
+};
+
 const authService = {
   register,
   login,
   logout,
   getProfile,
   updateProfile,
+  forgotPassword,
+  resetPassword,
 };
 
 export default authService;

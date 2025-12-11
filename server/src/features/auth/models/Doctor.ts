@@ -4,6 +4,8 @@ const DoctorSchema = new mongoose.Schema({
   // Auth Fields
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
+  resetToken: { type: String, required: false },
+  resetTokenExpiry: { type: Date, required: false },
 
   // Profile Fields
   name: { type: String, required: true },

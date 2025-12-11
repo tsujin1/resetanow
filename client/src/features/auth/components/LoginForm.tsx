@@ -14,6 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ForgotPasswordDialog } from "./ForgotPasswordDialog";
 
 // Define the error shape (same as we did in Register)
 interface ApiError {
@@ -33,6 +34,7 @@ export function LoginForm({
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
 
   // 1. Hook into your real Auth Context
   const { login } = useContext(AuthContext)!;
@@ -140,13 +142,13 @@ export function LoginForm({
           <div className="grid gap-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="password">Password</Label>
-              <a
-                href="#"
-                onClick={(e) => e.preventDefault()}
+              <button
+                type="button"
+                onClick={() => setIsForgotPasswordOpen(true)}
                 className="text-sm font-medium text-primary hover:text-primary/80 hover:underline underline-offset-4"
               >
                 Forgot password?
-              </a>
+              </button>
             </div>
             <div className="relative">
               <div className="absolute left-3 top-3 text-muted-foreground">
@@ -197,6 +199,11 @@ export function LoginForm({
           Sign up
         </Link>
       </div>
+
+      <ForgotPasswordDialog
+        open={isForgotPasswordOpen}
+        onOpenChange={setIsForgotPasswordOpen}
+      />
     </div>
   );
 }

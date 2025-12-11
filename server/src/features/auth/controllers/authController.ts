@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { Doctor } from "../models/Doctor";
 
 // Generate JWT Token
@@ -138,6 +139,94 @@ export const updateProfile = async (req: Request, res: Response) => {
       res.status(404).json({ message: "Doctor not found" });
     }
   } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// @desc    Request password reset
+// @route   POST /api/auth/forgot-password
+// @access  Public
+export const forgotPassword = async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      res.status(400).json({ message: "Email is required" });
+      return;
+    }
+
+    const doctor = await Doctor.findOne({ email });
+
+    if (!doctor) {
+      // Don't reveal if email exists for security
+      res.json({ 
+        message: "If that email exists, a password reset link has been sent.",
+        resetToken: null // Return null so frontend doesn't send email
+      });
+      return;
+    }
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const resetTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    doctor.resetToken = resetToken;
+    doctor.resetTokenExpiry = resetTokenExpiry;
+    await doctor.save();
+
+    // Return token so frontend can send email via EmailJS
+    res.json({
+      message: "If that email exists, a password reset link has been sent.",
+      resetToken,
+      email: doctor.email,
+    });
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// @desc    Reset password with token
+// @route   POST /api/auth/reset-password
+// @access  Public
+export const resetPassword = async (req: Request, res: Response) => {
+  try {
+    const { token, email, password } = req.body;
+
+    if (!token || !email || !password) {
+      res.status(400).json({ message: "Token, email, and password are required" });
+      return;
+    }
+
+    if (password.length < 8) {
+      res.status(400).json({ message: "Password must be at least 8 characters" });
+      return;
+    }
+
+    const doctor = await Doctor.findOne({
+      email,
+      resetToken: token,
+      resetTokenExpiry: { $gt: new Date() }, // Token not expired
+    });
+
+    if (!doctor) {
+      res.status(400).json({ message: "Invalid or expired reset token" });
+      return;
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Update password and clear reset token
+    doctor.password = hashedPassword;
+    doctor.resetToken = undefined;
+    doctor.resetTokenExpiry = undefined;
+    await doctor.save();
+
+    res.json({ message: "Password has been reset successfully" });
+  } catch (error) {
+    console.error("Reset password error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
