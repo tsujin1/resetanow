@@ -1,5 +1,5 @@
-import { useState, useContext } from "react";
-import { Link, useNavigate } from "react-router-dom"; // Added useNavigate
+import { useState, useContext, useEffect } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom"; // Added useNavigate
 import { AuthContext } from "@/shared/context/AuthContext";
 import { Loader2, AlertCircle, Mail, Lock, ArrowRight } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
@@ -35,10 +35,21 @@ export function LoginForm({
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
+  const [searchParams] = useSearchParams();
 
   // 1. Hook into your real Auth Context
   const { login } = useContext(AuthContext)!;
   const navigate = useNavigate();
+
+  // Check for error message from URL params (e.g., invalid reset link)
+  useEffect(() => {
+    const errorParam = searchParams.get("error");
+    if (errorParam === "invalid_reset_link") {
+      setError("Invalid or expired password reset link. Please request a new one.");
+      // Clear the error param from URL
+      navigate("/login", { replace: true });
+    }
+  }, [searchParams, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });

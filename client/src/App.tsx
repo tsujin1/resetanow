@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/sonner";
 import AuthLayout from "@/shared/layouts/AuthLayout";
 import AppLayout from "@/shared/layouts/AppLayout";
 import PrivateRoute from "@/shared/components/PrivateRoute";
+import ResetPasswordRoute from "@/shared/components/ResetPasswordRoute";
 import Login from "@/features/auth/pages/Login";
 import Register from "@/features/auth/pages/Register";
 import ResetPassword from "@/features/auth/pages/ResetPassword";
@@ -22,7 +23,15 @@ function App() {
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
+          {/* Protected Reset Password Route - requires valid token and email */}
+          <Route
+            path="/reset-password"
+            element={
+              <ResetPasswordRoute>
+                <ResetPassword />
+              </ResetPasswordRoute>
+            }
+          />
         </Route>
 
         {/* Private Application Routes - Protected by PrivateRoute */}
