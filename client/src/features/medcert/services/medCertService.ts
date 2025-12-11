@@ -143,4 +143,3 @@ const medCertService = {
 };
 
 export default medCertService;
-

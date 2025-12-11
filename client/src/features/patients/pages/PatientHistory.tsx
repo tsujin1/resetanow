@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -94,9 +94,7 @@ export default function PatientHistory() {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
-          <AlertDescription>
-            {error || "Patient not found"}
-          </AlertDescription>
+          <AlertDescription>{error || "Patient not found"}</AlertDescription>
         </Alert>
       </div>
     );
@@ -228,8 +226,8 @@ export default function PatientHistory() {
               No History Found
             </h3>
             <p className="text-sm text-slate-500 max-w-sm">
-              This patient doesn't have any prescriptions or medical certificates
-              yet.
+              This patient doesn't have any prescriptions or medical
+              certificates yet.
             </p>
           </div>
         </Card>
@@ -345,4 +343,3 @@ export default function PatientHistory() {
     </div>
   );
 }
-

@@ -10,4 +10,3 @@ export interface IMedCert {
   amount: number; // For billing dashboard
   createdAt?: string;
 }
-

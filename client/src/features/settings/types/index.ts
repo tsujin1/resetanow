@@ -12,4 +12,3 @@ export interface IDoctor {
   s2No?: string; // Optional
   signatureUrl?: string | null;
 }
-

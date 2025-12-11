@@ -232,7 +232,7 @@ export function useDashboardData() {
         }
       }
     };
-    
+
     fetchDashboardData();
 
     return () => {

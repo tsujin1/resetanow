@@ -7,4 +7,3 @@ export interface IPatient {
   contactNumber: string;
   lastVisit: string; // ISO Date string
 }
-

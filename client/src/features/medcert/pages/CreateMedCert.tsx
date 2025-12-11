@@ -12,7 +12,10 @@ import medCertService from "@/features/medcert/services/medCertService";
 import type { IPatient } from "@/features/patients/types";
 
 // Import schema and type
-import { medCertSchema, type MedCertValues } from "@/features/medcert/schemas/medCert";
+import {
+  medCertSchema,
+  type MedCertValues,
+} from "@/features/medcert/schemas/medCert";
 
 // Import components
 import { PatientInfoCard } from "@/features/medcert/components/PatientInfoCard";

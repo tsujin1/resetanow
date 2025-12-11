@@ -84,4 +84,3 @@ export default function BillingCard({ control, amount }: BillingCardProps) {
     </Card>
   );
 }
-

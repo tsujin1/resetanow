@@ -5,29 +5,20 @@ import { useDashboardData } from "@/features/dashboard/hooks/useDashboardData";
 import { DashboardMetricsCards } from "@/features/dashboard/components/DashboardMetrics";
 
 // Lazy load chart components to reduce initial bundle size
-const WeeklyAnalysisChart = lazy(
-  () =>
-    import("@/features/dashboard/components/DashboardCharts").then(
-      (module) => ({
-        default: module.WeeklyAnalysisChart,
-      }),
-    ),
+const WeeklyAnalysisChart = lazy(() =>
+  import("@/features/dashboard/components/DashboardCharts").then((module) => ({
+    default: module.WeeklyAnalysisChart,
+  })),
 );
-const RevenueSourceChart = lazy(
-  () =>
-    import("@/features/dashboard/components/DashboardCharts").then(
-      (module) => ({
-        default: module.RevenueSourceChart,
-      }),
-    ),
+const RevenueSourceChart = lazy(() =>
+  import("@/features/dashboard/components/DashboardCharts").then((module) => ({
+    default: module.RevenueSourceChart,
+  })),
 );
-const MonthlyGrowthChart = lazy(
-  () =>
-    import("@/features/dashboard/components/DashboardCharts").then(
-      (module) => ({
-        default: module.MonthlyGrowthChart,
-      }),
-    ),
+const MonthlyGrowthChart = lazy(() =>
+  import("@/features/dashboard/components/DashboardCharts").then((module) => ({
+    default: module.MonthlyGrowthChart,
+  })),
 );
 
 // Chart loading skeleton

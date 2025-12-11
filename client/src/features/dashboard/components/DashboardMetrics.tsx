@@ -1,7 +1,7 @@
 import { memo } from "react";
 import { Users, FileText, FileBadge, Wallet, ArrowUpRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { DashboardMetrics as IMetrics } from "./types";
+import type { DashboardMetrics as IMetrics } from "../../dashboard/types";
 
 interface Props {
   metrics: IMetrics;

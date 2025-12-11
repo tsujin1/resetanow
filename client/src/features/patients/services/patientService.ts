@@ -139,7 +139,9 @@ const deletePatient = async (id: string): Promise<void> => {
 /**
  * Get patient history (prescriptions and medical certificates)
  */
-const getPatientHistory = async (id: string): Promise<{
+const getPatientHistory = async (
+  id: string,
+): Promise<{
   patient: IPatient;
   prescriptions: IPrescription[];
   medCerts: IMedCert[];
@@ -153,7 +155,10 @@ const getPatientHistory = async (id: string): Promise<{
   } catch (error) {
     if (error instanceof AxiosError) {
       // Handle connection errors
-      if (error.code === "ECONNREFUSED" || error.message.includes("ERR_CONNECTION_REFUSED")) {
+      if (
+        error.code === "ECONNREFUSED" ||
+        error.message.includes("ERR_CONNECTION_REFUSED")
+      ) {
         throw new Error(
           "Cannot connect to server. Please make sure the server is running.",
         );

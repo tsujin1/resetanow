@@ -14,4 +14,3 @@ export interface IPrescription {
   }[];
   createdAt?: string;
 }
-
