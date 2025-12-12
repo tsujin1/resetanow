@@ -7,7 +7,9 @@ interface ResetPasswordRouteProps {
   children: ReactNode;
 }
 
-export default function ResetPasswordRoute({ children }: ResetPasswordRouteProps) {
+export default function ResetPasswordRoute({
+  children,
+}: ResetPasswordRouteProps) {
   const { user, isLoading } = useContext(AuthContext)!;
   const [searchParams] = useSearchParams();
   const [isValidating, setIsValidating] = useState(true);
@@ -72,4 +74,3 @@ export default function ResetPasswordRoute({ children }: ResetPasswordRouteProps
   // Token and email are present and valid, allow access to reset password page
   return <>{children}</>;
 }
-

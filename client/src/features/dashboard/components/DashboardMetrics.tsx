@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { Users, FileText, FileBadge, Wallet, ArrowUpRight } from "lucide-react";
+import { Users, Pill, FileBadge, Wallet, ArrowUpRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { DashboardMetrics as IMetrics } from "../../dashboard/types";
 
@@ -49,7 +49,7 @@ export const DashboardMetricsCards = memo(({ metrics, isLoading }: Props) => {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Prescriptions</CardTitle>
-          <FileText className="h-4 w-4 text-muted-foreground" />
+          <Pill className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -72,7 +72,7 @@ export const DashboardMetricsCards = memo(({ metrics, isLoading }: Props) => {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">
-            Medical Certifications
+            Medical Certificates
           </CardTitle>
           <FileBadge className="h-4 w-4 text-muted-foreground" />
         </CardHeader>

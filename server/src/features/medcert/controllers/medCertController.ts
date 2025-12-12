@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { MedCert } from "../models/MedCert";
 import { Patient } from "../../patients/models/Patient";
+import { PatientService } from "../../patients/services/patientService";
 
 // @desc    Get all medical certificates for the authenticated doctor
 // @route   GET /api/medcerts
@@ -94,6 +95,9 @@ export const createMedCert = async (req: Request, res: Response) => {
       amount,
     });
 
+    // Update patient's lastVisit based on most recent prescription/medcert
+    await PatientService.updatePatientLastVisit(patientId, (req as any).user._id);
+
     // Populate patient data in response
     const populatedMedCert = await MedCert.findById(medCert._id).populate(
       "patientId",
@@ -160,6 +164,12 @@ export const updateMedCert = async (req: Request, res: Response) => {
 
     const updatedMedCert = await medCert.save();
 
+    // Update patient's lastVisit based on most recent prescription/medcert
+    await PatientService.updatePatientLastVisit(
+      updatedMedCert.patientId.toString(),
+      (req as any).user._id,
+    );
+
     // Populate patient data in response
     const populatedMedCert = await MedCert.findById(updatedMedCert._id).populate(
       "patientId",
@@ -188,7 +198,12 @@ export const deleteMedCert = async (req: Request, res: Response) => {
       return;
     }
 
+    const patientId = medCert.patientId.toString();
     await MedCert.deleteOne({ _id: req.params.id });
+
+    // Update patient's lastVisit based on most recent prescription/medcert
+    await PatientService.updatePatientLastVisit(patientId, (req as any).user._id);
+
     res.json({ message: "Medical certificate deleted successfully" });
   } catch (error) {
     console.error("Error deleting medical certificate:", error);

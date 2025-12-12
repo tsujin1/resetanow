@@ -1,6 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
-import { Loader2, AlertCircle, Lock, CheckCircle2, ArrowRight } from "lucide-react";
+import {
+  Loader2,
+  AlertCircle,
+  Lock,
+  CheckCircle2,
+  ArrowRight,
+} from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -78,7 +84,7 @@ export function ResetPasswordForm({
     try {
       await authService.resetPassword(token, email, formData.password);
       setSuccess(true);
-      
+
       // Redirect to login after 3 seconds
       setTimeout(() => {
         navigate("/login");
@@ -141,8 +147,8 @@ export function ResetPasswordForm({
             <Alert className="bg-green-50 border-green-200 text-green-800">
               <CheckCircle2 className="h-4 w-4 text-green-600" />
               <AlertDescription>
-                Your password has been successfully reset. You will be redirected to
-                the login page in a few seconds.
+                Your password has been successfully reset. You will be
+                redirected to the login page in a few seconds.
               </AlertDescription>
             </Alert>
             <Button
@@ -195,9 +201,7 @@ export function ResetPasswordForm({
           <CardTitle className="text-2xl font-bold tracking-tight">
             Reset Your Password
           </CardTitle>
-          <CardDescription>
-            Enter your new password below
-          </CardDescription>
+          <CardDescription>Enter your new password below</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
           {error && (
@@ -227,7 +231,8 @@ export function ResetPasswordForm({
                   onKeyPress={handleKeyPress}
                   className={cn(
                     "pl-9 h-10 bg-background",
-                    error && "border-destructive focus-visible:ring-destructive",
+                    error &&
+                      "border-destructive focus-visible:ring-destructive",
                   )}
                   required
                   minLength={8}
@@ -254,7 +259,8 @@ export function ResetPasswordForm({
                   onKeyPress={handleKeyPress}
                   className={cn(
                     "pl-9 h-10 bg-background",
-                    error && "border-destructive focus-visible:ring-destructive",
+                    error &&
+                      "border-destructive focus-visible:ring-destructive",
                   )}
                   required
                   minLength={8}
@@ -294,4 +300,3 @@ export function ResetPasswordForm({
     </div>
   );
 }
-

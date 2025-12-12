@@ -165,7 +165,8 @@ export function ForgotPasswordDialog({
                   disabled={isLoading}
                   className={cn(
                     "pl-9 h-10 bg-background",
-                    error && "border-destructive focus-visible:ring-destructive",
+                    error &&
+                      "border-destructive focus-visible:ring-destructive",
                   )}
                   required
                   autoFocus
@@ -193,4 +194,3 @@ export function ForgotPasswordDialog({
     </Dialog>
   );
 }
-

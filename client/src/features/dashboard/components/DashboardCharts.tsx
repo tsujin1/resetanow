@@ -77,7 +77,7 @@ export const WeeklyAnalysisChart = memo(
           </div>
           <div className="flex items-center gap-2">
             <div className="h-3 w-3 rounded bg-[#64748b]" />
-            <span>Medical Certification</span>
+            <span>Medical Certificate</span>
           </div>
         </div>
       </CardContent>

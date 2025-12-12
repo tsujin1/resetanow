@@ -177,7 +177,7 @@ export default function PatientTableRow({
         </DropdownMenu>
 
         <AlertDialog open={open} onOpenChange={setOpen}>
-          <AlertDialogContent className="sm:max-w-[425px]">
+          <AlertDialogContent className="max-w-[90vw] sm:max-w-[400px]">
             <AlertDialogHeader>
               <div className="flex items-center gap-3 mb-2">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">

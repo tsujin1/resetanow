@@ -45,7 +45,9 @@ export function LoginForm({
   useEffect(() => {
     const errorParam = searchParams.get("error");
     if (errorParam === "invalid_reset_link") {
-      setError("Invalid or expired password reset link. Please request a new one.");
+      setError(
+        "Invalid or expired password reset link. Please request a new one.",
+      );
       // Clear the error param from URL
       navigate("/login", { replace: true });
     }

@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { Prescription } from "../models/Prescription";
 import { Patient } from "../../patients/models/Patient";
+import { PatientService } from "../../patients/services/patientService";
 
 // @desc    Get all prescriptions for the authenticated doctor
 // @route   GET /api/prescriptions
@@ -98,6 +99,9 @@ export const createPrescription = async (req: Request, res: Response) => {
       medications,
     });
 
+    // Update patient's lastVisit based on most recent prescription/medcert
+    await PatientService.updatePatientLastVisit(patientId, (req as any).user._id);
+
     // Populate patient data in response
     const populatedPrescription = await Prescription.findById(
       prescription._id,
@@ -177,6 +181,12 @@ export const updatePrescription = async (req: Request, res: Response) => {
 
     const updatedPrescription = await prescription.save();
 
+    // Update patient's lastVisit based on most recent prescription/medcert
+    await PatientService.updatePatientLastVisit(
+      updatedPrescription.patientId.toString(),
+      (req as any).user._id,
+    );
+
     // Populate patient data in response
     const populatedPrescription = await Prescription.findById(
       updatedPrescription._id,
@@ -204,7 +214,12 @@ export const deletePrescription = async (req: Request, res: Response) => {
       return;
     }
 
+    const patientId = prescription.patientId.toString();
     await Prescription.deleteOne({ _id: req.params.id });
+
+    // Update patient's lastVisit based on most recent prescription/medcert
+    await PatientService.updatePatientLastVisit(patientId, (req as any).user._id);
+
     res.json({ message: "Prescription deleted successfully" });
   } catch (error) {
     console.error("Error deleting prescription:", error);

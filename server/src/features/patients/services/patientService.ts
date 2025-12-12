@@ -82,6 +82,55 @@ export class PatientService {
   }
 
   /**
+   * Update patient's lastVisit based on most recent prescription or medcert date
+   */
+  static async updatePatientLastVisit(patientId: string, doctorId: Types.ObjectId) {
+    const patient = await Patient.findOne({
+      _id: patientId,
+      doctor: doctorId,
+    });
+
+    if (!patient) {
+      return;
+    }
+
+    // Find most recent prescription date
+    const latestPrescription = await Prescription.findOne({
+      patientId: patientId,
+      doctor: doctorId,
+    })
+      .sort({ date: -1 })
+      .select("date");
+
+    // Find most recent medcert date
+    const latestMedCert = await MedCert.findOne({
+      patientId: patientId,
+      doctor: doctorId,
+    })
+      .sort({ date: -1 })
+      .select("date");
+
+    // Determine the most recent date
+    let mostRecentDate: Date | null = null;
+
+    if (latestPrescription && latestMedCert) {
+      mostRecentDate = latestPrescription.date > latestMedCert.date 
+        ? latestPrescription.date 
+        : latestMedCert.date;
+    } else if (latestPrescription) {
+      mostRecentDate = latestPrescription.date;
+    } else if (latestMedCert) {
+      mostRecentDate = latestMedCert.date;
+    }
+
+    // Update patient's lastVisit if we found a date
+    if (mostRecentDate) {
+      patient.lastVisit = mostRecentDate;
+      await patient.save();
+    }
+  }
+
+  /**
    * Get patient history (prescriptions and medical certificates)
    */
   static async getPatientHistory(patientId: string, doctorId: Types.ObjectId): Promise<PatientHistoryResult> {
