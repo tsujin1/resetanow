@@ -188,8 +188,9 @@ export const MonthlyGrowthChart = memo(
               ₱{current.toLocaleString()}
             </div>
             <div
-              className={`text-xs flex items-center justify-end ${diff >= 0 ? "text-emerald-600" : "text-red-600"
-                }`}
+              className={`text-xs flex items-center justify-end ${
+                diff >= 0 ? "text-emerald-600" : "text-red-600"
+              }`}
             >
               {diff >= 0 ? (
                 <ArrowUpRight className="h-3 w-3 mr-1" />

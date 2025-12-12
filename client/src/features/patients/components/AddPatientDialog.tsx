@@ -167,8 +167,23 @@ export default function AddPatientDialog({
                         type="number"
                         placeholder="0"
                         {...field}
-                        value={field.value as number}
-                        onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                        value={field.value === 0 ? "" : field.value}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          // If field is empty or user is typing, allow empty string
+                          if (value === "") {
+                            field.onChange(0);
+                          } else {
+                            const numValue = Number(value);
+                            field.onChange(isNaN(numValue) ? 0 : numValue);
+                          }
+                        }}
+                        onFocus={(e) => {
+                          // Clear the 0 when user focuses on the field
+                          if (field.value === 0) {
+                            e.target.value = "";
+                          }
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
