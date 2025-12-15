@@ -8,6 +8,7 @@ import {
   getPatientHistory,
 } from "../controllers/patientController";
 import { protect } from "../../../shared/middleware/authMiddleware";
+import { validateObjectId } from "../../../shared/middleware/validateObjectId";
 
 const router = express.Router();
 
@@ -17,12 +18,12 @@ router.route("/")
   .post(protect, createPatient);
 
 router.route("/:id/history")
-  .get(protect, getPatientHistory);
+  .get(protect, validateObjectId("id"), getPatientHistory);
 
 router.route("/:id")
-  .get(protect, getPatientById)
-  .put(protect, updatePatient)
-  .delete(protect, deletePatient);
+  .get(protect, validateObjectId("id"), getPatientById)
+  .put(protect, validateObjectId("id"), updatePatient)
+  .delete(protect, validateObjectId("id"), deletePatient);
 
 export default router;
 

@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { MedCert } from "../models/MedCert";
 import { Patient } from "../../patients/models/Patient";
 import { PatientService } from "../../patients/services/patientService";
+import { isValidObjectId, sanitizeString } from "../../../shared/utils/validation";
 
 // @desc    Get all medical certificates for the authenticated doctor
 // @route   GET /api/medcerts
@@ -26,8 +27,15 @@ export const getMedCerts = async (req: Request, res: Response) => {
 // @access  Private
 export const getMedCertById = async (req: Request, res: Response) => {
   try {
+    const medCertId = req.params.id;
+
+    if (!isValidObjectId(medCertId)) {
+      res.status(400).json({ message: "Invalid medical certificate ID format" });
+      return;
+    }
+
     const medCert = await MedCert.findOne({
-      _id: req.params.id,
+      _id: medCertId,
       doctor: (req as any).user._id,
     }).populate("patientId", "name age gender address contactNumber");
 
@@ -67,6 +75,19 @@ export const createMedCert = async (req: Request, res: Response) => {
       return;
     }
 
+    // Validate patientId format
+    if (!isValidObjectId(patientId)) {
+      res.status(400).json({ message: "Invalid patient ID format" });
+      return;
+    }
+
+    // Validate amount
+    const amountNum = Number(amount);
+    if (isNaN(amountNum) || amountNum < 0) {
+      res.status(400).json({ message: "Amount must be a valid positive number" });
+      return;
+    }
+
     // Verify patient belongs to the doctor
     const patient = await Patient.findOne({
       _id: patientId,
@@ -80,19 +101,14 @@ export const createMedCert = async (req: Request, res: Response) => {
       return;
     }
 
-    if (amount < 0) {
-      res.status(400).json({ message: "Amount must be a positive number" });
-      return;
-    }
-
     const medCert = await MedCert.create({
       doctor: (req as any).user._id,
       patientId,
       date: new Date(date),
-      reason,
-      diagnosis,
-      recommendation,
-      amount,
+      reason: sanitizeString(reason),
+      diagnosis: sanitizeString(diagnosis),
+      recommendation: sanitizeString(recommendation),
+      amount: amountNum,
     });
 
     // Update patient's lastVisit based on most recent prescription/medcert
@@ -116,8 +132,15 @@ export const createMedCert = async (req: Request, res: Response) => {
 // @access  Private
 export const updateMedCert = async (req: Request, res: Response) => {
   try {
+    const medCertId = req.params.id;
+
+    if (!isValidObjectId(medCertId)) {
+      res.status(400).json({ message: "Invalid medical certificate ID format" });
+      return;
+    }
+
     const medCert = await MedCert.findOne({
-      _id: req.params.id,
+      _id: medCertId,
       doctor: (req as any).user._id,
     });
 
@@ -128,6 +151,10 @@ export const updateMedCert = async (req: Request, res: Response) => {
 
     // Update fields
     if (req.body.patientId !== undefined) {
+      if (!isValidObjectId(req.body.patientId)) {
+        res.status(400).json({ message: "Invalid patient ID format" });
+        return;
+      }
       // Verify new patient belongs to the doctor
       const patient = await Patient.findOne({
         _id: req.body.patientId,
@@ -146,20 +173,21 @@ export const updateMedCert = async (req: Request, res: Response) => {
       medCert.date = new Date(req.body.date);
     }
     if (req.body.reason !== undefined) {
-      medCert.reason = req.body.reason;
+      medCert.reason = sanitizeString(req.body.reason);
     }
     if (req.body.diagnosis !== undefined) {
-      medCert.diagnosis = req.body.diagnosis;
+      medCert.diagnosis = sanitizeString(req.body.diagnosis);
     }
     if (req.body.recommendation !== undefined) {
-      medCert.recommendation = req.body.recommendation;
+      medCert.recommendation = sanitizeString(req.body.recommendation);
     }
     if (req.body.amount !== undefined) {
-      if (req.body.amount < 0) {
-        res.status(400).json({ message: "Amount must be a positive number" });
+      const amountNum = Number(req.body.amount);
+      if (isNaN(amountNum) || amountNum < 0) {
+        res.status(400).json({ message: "Amount must be a valid positive number" });
         return;
       }
-      medCert.amount = req.body.amount;
+      medCert.amount = amountNum;
     }
 
     const updatedMedCert = await medCert.save();
@@ -188,8 +216,15 @@ export const updateMedCert = async (req: Request, res: Response) => {
 // @access  Private
 export const deleteMedCert = async (req: Request, res: Response) => {
   try {
+    const medCertId = req.params.id;
+
+    if (!isValidObjectId(medCertId)) {
+      res.status(400).json({ message: "Invalid medical certificate ID format" });
+      return;
+    }
+
     const medCert = await MedCert.findOne({
-      _id: req.params.id,
+      _id: medCertId,
       doctor: (req as any).user._id,
     });
 
@@ -199,7 +234,7 @@ export const deleteMedCert = async (req: Request, res: Response) => {
     }
 
     const patientId = medCert.patientId.toString();
-    await MedCert.deleteOne({ _id: req.params.id });
+    await MedCert.deleteOne({ _id: medCertId });
 
     // Update patient's lastVisit based on most recent prescription/medcert
     await PatientService.updatePatientLastVisit(patientId, (req as any).user._id);

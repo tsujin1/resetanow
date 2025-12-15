@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { PatientService } from "../services/patientService";
+import { sanitizeString, isValidObjectId } from "../../../shared/utils/validation";
 
 // @desc    Get all patients for the authenticated doctor
 // @route   GET /api/patients
@@ -19,8 +20,15 @@ export const getPatients = async (req: Request, res: Response) => {
 // @access  Private
 export const getPatientById = async (req: Request, res: Response) => {
   try {
+    const patientId = req.params.id;
+
+    if (!isValidObjectId(patientId)) {
+      res.status(400).json({ message: "Invalid patient ID format" });
+      return;
+    }
+
     const patient = await PatientService.getPatientById(
-      req.params.id,
+      patientId,
       (req as any).user._id,
     );
 
@@ -51,18 +59,26 @@ export const createPatient = async (req: Request, res: Response) => {
       return;
     }
 
+    // Validate age
+    const ageNum = Number(age);
+    if (isNaN(ageNum) || ageNum < 0 || ageNum > 150) {
+      res.status(400).json({ message: "Age must be a valid number between 0 and 150" });
+      return;
+    }
+
     if (!["Male", "Female"].includes(gender)) {
       res.status(400).json({ message: "Gender must be either 'Male' or 'Female'" });
       return;
     }
 
+    // Sanitize inputs
     const patient = await PatientService.createPatient((req as any).user._id, {
-      name,
-      age,
+      name: sanitizeString(name),
+      age: ageNum,
       gender,
-      address,
-      contactNumber,
-      lastVisit,
+      address: sanitizeString(address),
+      contactNumber: sanitizeString(contactNumber),
+      lastVisit: lastVisit ? new Date(lastVisit) : undefined,
     });
 
     res.status(201).json(patient);
@@ -77,15 +93,38 @@ export const createPatient = async (req: Request, res: Response) => {
 // @access  Private
 export const updatePatient = async (req: Request, res: Response) => {
   try {
+    const patientId = req.params.id;
+
+    if (!isValidObjectId(patientId)) {
+      res.status(400).json({ message: "Invalid patient ID format" });
+      return;
+    }
+
     if (req.body.gender !== undefined && !["Male", "Female"].includes(req.body.gender)) {
       res.status(400).json({ message: "Gender must be either 'Male' or 'Female'" });
       return;
     }
 
+    // Validate age if provided
+    if (req.body.age !== undefined) {
+      const ageNum = Number(req.body.age);
+      if (isNaN(ageNum) || ageNum < 0 || ageNum > 150) {
+        res.status(400).json({ message: "Age must be a valid number between 0 and 150" });
+        return;
+      }
+      req.body.age = ageNum;
+    }
+
+    // Sanitize string fields
+    const sanitizedBody: any = { ...req.body };
+    if (sanitizedBody.name) sanitizedBody.name = sanitizeString(sanitizedBody.name);
+    if (sanitizedBody.address) sanitizedBody.address = sanitizeString(sanitizedBody.address);
+    if (sanitizedBody.contactNumber) sanitizedBody.contactNumber = sanitizeString(sanitizedBody.contactNumber);
+
     const updatedPatient = await PatientService.updatePatient(
-      req.params.id,
+      patientId,
       (req as any).user._id,
-      req.body,
+      sanitizedBody,
     );
 
     if (!updatedPatient) {
@@ -105,8 +144,15 @@ export const updatePatient = async (req: Request, res: Response) => {
 // @access  Private
 export const deletePatient = async (req: Request, res: Response) => {
   try {
+    const patientId = req.params.id;
+
+    if (!isValidObjectId(patientId)) {
+      res.status(400).json({ message: "Invalid patient ID format" });
+      return;
+    }
+
     const deleted = await PatientService.deletePatient(
-      req.params.id,
+      patientId,
       (req as any).user._id,
     );
 
@@ -127,8 +173,15 @@ export const deletePatient = async (req: Request, res: Response) => {
 // @access  Private
 export const getPatientHistory = async (req: Request, res: Response) => {
   try {
+    const patientId = req.params.id;
+
+    if (!isValidObjectId(patientId)) {
+      res.status(400).json({ message: "Invalid patient ID format" });
+      return;
+    }
+
     const history = await PatientService.getPatientHistory(
-      req.params.id,
+      patientId,
       (req as any).user._id,
     );
     res.json(history);

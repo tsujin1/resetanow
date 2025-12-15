@@ -7,6 +7,7 @@ import {
   deletePrescription,
 } from "../controllers/prescriptionController";
 import { protect } from "../../../shared/middleware/authMiddleware";
+import { validateObjectId } from "../../../shared/middleware/validateObjectId";
 
 const router = express.Router();
 
@@ -16,9 +17,9 @@ router.route("/")
   .post(protect, createPrescription);
 
 router.route("/:id")
-  .get(protect, getPrescriptionById)
-  .put(protect, updatePrescription)
-  .delete(protect, deletePrescription);
+  .get(protect, validateObjectId("id"), getPrescriptionById)
+  .put(protect, validateObjectId("id"), updatePrescription)
+  .delete(protect, validateObjectId("id"), deletePrescription);
 
 export default router;
 

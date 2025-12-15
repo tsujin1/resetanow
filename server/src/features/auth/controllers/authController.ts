@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { Doctor } from "../models/Doctor";
+import { validateAndSanitizeEmail, isValidPassword, sanitizeString } from "../../../shared/utils/validation";
 
 // Generate JWT Token
 const generateToken = (id: string) => {
@@ -15,38 +16,62 @@ const generateToken = (id: string) => {
 // @route   POST /api/auth/register
 // @access  Public
 export const registerDoctor = async (req: Request, res: Response) => {
-  const { name, email, password, licenseNo } = req.body;
+  try {
+    const { name, email, password, licenseNo } = req.body;
 
-  if (!name || !email || !password) {
-    res.status(400).json({ message: "Please add all fields" });
-    return;
-  }
+    if (!name || !email || !password) {
+      res.status(400).json({ message: "Please add all required fields" });
+      return;
+    }
 
-  const doctorExists = await Doctor.findOne({ email });
-  if (doctorExists) {
-    res.status(400).json({ message: "User already exists" });
-    return;
-  }
+    // Validate and sanitize email
+    const emailValidation = validateAndSanitizeEmail(email);
+    if (!emailValidation.isValid) {
+      res.status(400).json({ message: "Please provide a valid email address" });
+      return;
+    }
 
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(password, salt);
+    // Validate password strength
+    if (!isValidPassword(password)) {
+      res.status(400).json({
+        message:
+          "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number",
+      });
+      return;
+    }
 
-  const doctor = await Doctor.create({
-    name,
-    email,
-    password: hashedPassword,
-    licenseNo,
-  });
+    // Sanitize name
+    const sanitizedName = sanitizeString(name);
 
-  if (doctor) {
-    res.status(201).json({
-      _id: doctor.id,
-      name: doctor.name,
-      email: doctor.email,
-      token: generateToken(doctor.id),
+    const doctorExists = await Doctor.findOne({ email: emailValidation.sanitized });
+    if (doctorExists) {
+      res.status(400).json({ message: "User already exists" });
+      return;
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const doctor = await Doctor.create({
+      name: sanitizedName,
+      email: emailValidation.sanitized,
+      password: hashedPassword,
+      licenseNo: licenseNo ? sanitizeString(licenseNo) : "",
     });
-  } else {
-    res.status(400).json({ message: "Invalid user data" });
+
+    if (doctor) {
+      res.status(201).json({
+        _id: doctor.id,
+        name: doctor.name,
+        email: doctor.email,
+        token: generateToken(doctor.id),
+      });
+    } else {
+      res.status(400).json({ message: "Invalid user data" });
+    }
+  } catch (error) {
+    console.error("Registration error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -54,19 +79,36 @@ export const registerDoctor = async (req: Request, res: Response) => {
 // @route   POST /api/auth/login
 // @access  Public
 export const loginDoctor = async (req: Request, res: Response) => {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-  const doctor = await Doctor.findOne({ email });
+    if (!email || !password) {
+      res.status(400).json({ message: "Email and password are required" });
+      return;
+    }
 
-  if (doctor && (await bcrypt.compare(password, doctor.password))) {
-    res.json({
-      _id: doctor.id,
-      name: doctor.name,
-      email: doctor.email,
-      token: generateToken(doctor.id),
-    });
-  } else {
-    res.status(400).json({ message: "Invalid credentials" });
+    // Validate and sanitize email
+    const emailValidation = validateAndSanitizeEmail(email);
+    if (!emailValidation.isValid) {
+      res.status(400).json({ message: "Invalid email format" });
+      return;
+    }
+
+    const doctor = await Doctor.findOne({ email: emailValidation.sanitized });
+
+    if (doctor && (await bcrypt.compare(password, doctor.password))) {
+      res.json({
+        _id: doctor.id,
+        name: doctor.name,
+        email: doctor.email,
+        token: generateToken(doctor.id),
+      });
+    } else {
+      res.status(401).json({ message: "Invalid credentials" });
+    }
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -174,11 +216,12 @@ export const forgotPassword = async (req: Request, res: Response) => {
     doctor.resetTokenExpiry = resetTokenExpiry;
     await doctor.save();
 
-    // Return token so frontend can send email via EmailJS
+    // SECURITY: Do not return resetToken in response
+    // Frontend should handle email sending separately
+    // Token should only be accessible via secure email link
     res.json({
       message: "If that email exists, a password reset link has been sent.",
-      resetToken,
-      email: doctor.email,
+      // Note: In production, send email from server-side, don't expose token
     });
   } catch (error) {
     console.error("Forgot password error:", error);
@@ -198,8 +241,12 @@ export const resetPassword = async (req: Request, res: Response) => {
       return;
     }
 
-    if (password.length < 8) {
-      res.status(400).json({ message: "Password must be at least 8 characters" });
+    // Validate password strength
+    if (!isValidPassword(password)) {
+      res.status(400).json({
+        message:
+          "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number",
+      });
       return;
     }
 

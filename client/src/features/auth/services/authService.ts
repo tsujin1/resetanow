@@ -1,7 +1,7 @@
 import axios, { AxiosError } from "axios";
 import type { IDoctor } from "@/features/settings/types";
 
-const API_URL = "http://localhost:5000/api/";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api/";
 
 interface LoginData {
   email: string;

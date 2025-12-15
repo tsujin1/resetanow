@@ -7,6 +7,7 @@ import {
   deleteMedCert,
 } from "../controllers/medCertController";
 import { protect } from "../../../shared/middleware/authMiddleware";
+import { validateObjectId } from "../../../shared/middleware/validateObjectId";
 
 const router = express.Router();
 
@@ -16,9 +17,9 @@ router.route("/")
   .post(protect, createMedCert);
 
 router.route("/:id")
-  .get(protect, getMedCertById)
-  .put(protect, updateMedCert)
-  .delete(protect, deleteMedCert);
+  .get(protect, validateObjectId("id"), getMedCertById)
+  .put(protect, validateObjectId("id"), updateMedCert)
+  .delete(protect, validateObjectId("id"), deleteMedCert);
 
 export default router;
 

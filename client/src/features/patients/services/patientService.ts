@@ -3,7 +3,7 @@ import type { IPatient } from "@/features/patients/types";
 import type { IPrescription } from "@/features/prescriptions/types";
 import type { IMedCert } from "@/features/medcert/types";
 
-const API_URL = "http://localhost:5000/api/";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api/";
 
 // --- Private Helpers ---
 const getStoredUser = () => {

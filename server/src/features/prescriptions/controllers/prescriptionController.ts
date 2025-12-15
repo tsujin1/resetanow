@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { Prescription } from "../models/Prescription";
 import { Patient } from "../../patients/models/Patient";
 import { PatientService } from "../../patients/services/patientService";
+import { isValidObjectId, sanitizeString } from "../../../shared/utils/validation";
 
 // @desc    Get all prescriptions for the authenticated doctor
 // @route   GET /api/prescriptions
@@ -26,8 +27,15 @@ export const getPrescriptions = async (req: Request, res: Response) => {
 // @access  Private
 export const getPrescriptionById = async (req: Request, res: Response) => {
   try {
+    const prescriptionId = req.params.id;
+
+    if (!isValidObjectId(prescriptionId)) {
+      res.status(400).json({ message: "Invalid prescription ID format" });
+      return;
+    }
+
     const prescription = await Prescription.findOne({
-      _id: req.params.id,
+      _id: prescriptionId,
       doctor: (req as any).user._id,
     }).populate("patientId", "name age gender address contactNumber");
 
@@ -59,6 +67,19 @@ export const createPrescription = async (req: Request, res: Response) => {
       return;
     }
 
+    // Validate patientId format
+    if (!isValidObjectId(patientId)) {
+      res.status(400).json({ message: "Invalid patient ID format" });
+      return;
+    }
+
+    // Validate amount
+    const amountNum = Number(amount);
+    if (isNaN(amountNum) || amountNum < 0) {
+      res.status(400).json({ message: "Amount must be a valid positive number" });
+      return;
+    }
+
     if (!Array.isArray(medications) || medications.length === 0) {
       res.status(400).json({
         message: "At least one medication is required",
@@ -66,7 +87,7 @@ export const createPrescription = async (req: Request, res: Response) => {
       return;
     }
 
-    // Validate each medication
+    // Validate and sanitize each medication
     for (const med of medications) {
       if (!med.name || !med.dosage || !med.instructions || !med.quantity) {
         res.status(400).json({
@@ -75,6 +96,10 @@ export const createPrescription = async (req: Request, res: Response) => {
         });
         return;
       }
+      // Sanitize medication fields
+      med.name = sanitizeString(med.name);
+      med.dosage = sanitizeString(med.dosage);
+      med.instructions = sanitizeString(med.instructions);
     }
 
     // Verify patient belongs to the doctor
@@ -94,8 +119,8 @@ export const createPrescription = async (req: Request, res: Response) => {
       doctor: (req as any).user._id,
       patientId,
       date: new Date(date),
-      diagnosis: diagnosis || "",
-      amount,
+      diagnosis: diagnosis ? sanitizeString(diagnosis) : "",
+      amount: amountNum,
       medications,
     });
 
@@ -119,8 +144,15 @@ export const createPrescription = async (req: Request, res: Response) => {
 // @access  Private
 export const updatePrescription = async (req: Request, res: Response) => {
   try {
+    const prescriptionId = req.params.id;
+
+    if (!isValidObjectId(prescriptionId)) {
+      res.status(400).json({ message: "Invalid prescription ID format" });
+      return;
+    }
+
     const prescription = await Prescription.findOne({
-      _id: req.params.id,
+      _id: prescriptionId,
       doctor: (req as any).user._id,
     });
 
@@ -131,6 +163,10 @@ export const updatePrescription = async (req: Request, res: Response) => {
 
     // Update fields
     if (req.body.patientId !== undefined) {
+      if (!isValidObjectId(req.body.patientId)) {
+        res.status(400).json({ message: "Invalid patient ID format" });
+        return;
+      }
       // Verify new patient belongs to the doctor
       const patient = await Patient.findOne({
         _id: req.body.patientId,
@@ -149,14 +185,15 @@ export const updatePrescription = async (req: Request, res: Response) => {
       prescription.date = new Date(req.body.date);
     }
     if (req.body.diagnosis !== undefined) {
-      prescription.diagnosis = req.body.diagnosis;
+      prescription.diagnosis = sanitizeString(req.body.diagnosis);
     }
     if (req.body.amount !== undefined) {
-      if (req.body.amount < 0) {
-        res.status(400).json({ message: "Amount must be a positive number" });
+      const amountNum = Number(req.body.amount);
+      if (isNaN(amountNum) || amountNum < 0) {
+        res.status(400).json({ message: "Amount must be a valid positive number" });
         return;
       }
-      prescription.amount = req.body.amount;
+      prescription.amount = amountNum;
     }
     if (req.body.medications !== undefined) {
       if (!Array.isArray(req.body.medications) || req.body.medications.length === 0) {
@@ -166,7 +203,7 @@ export const updatePrescription = async (req: Request, res: Response) => {
         return;
       }
 
-      // Validate each medication
+      // Validate and sanitize each medication
       for (const med of req.body.medications) {
         if (!med.name || !med.dosage || !med.instructions || !med.quantity) {
           res.status(400).json({
@@ -175,6 +212,10 @@ export const updatePrescription = async (req: Request, res: Response) => {
           });
           return;
         }
+        // Sanitize medication fields
+        med.name = sanitizeString(med.name);
+        med.dosage = sanitizeString(med.dosage);
+        med.instructions = sanitizeString(med.instructions);
       }
       prescription.medications = req.body.medications;
     }
@@ -204,8 +245,15 @@ export const updatePrescription = async (req: Request, res: Response) => {
 // @access  Private
 export const deletePrescription = async (req: Request, res: Response) => {
   try {
+    const prescriptionId = req.params.id;
+
+    if (!isValidObjectId(prescriptionId)) {
+      res.status(400).json({ message: "Invalid prescription ID format" });
+      return;
+    }
+
     const prescription = await Prescription.findOne({
-      _id: req.params.id,
+      _id: prescriptionId,
       doctor: (req as any).user._id,
     });
 
@@ -215,7 +263,7 @@ export const deletePrescription = async (req: Request, res: Response) => {
     }
 
     const patientId = prescription.patientId.toString();
-    await Prescription.deleteOne({ _id: req.params.id });
+    await Prescription.deleteOne({ _id: prescriptionId });
 
     // Update patient's lastVisit based on most recent prescription/medcert
     await PatientService.updatePatientLastVisit(patientId, (req as any).user._id);
