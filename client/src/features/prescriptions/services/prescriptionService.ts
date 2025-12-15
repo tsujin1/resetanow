@@ -1,7 +1,11 @@
 import axios, { AxiosError } from "axios";
 import type { IPrescription } from "@/features/prescriptions/types";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api/";
+const getApiUrl = () => {
+  const url = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+  return url.endsWith("/") ? url : url + "/";
+};
+const API_URL = getApiUrl();
 
 // --- Private Helpers ---
 const getStoredUser = () => {
