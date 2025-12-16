@@ -10,13 +10,12 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { toast } from "sonner";
 
-// Import our sub-components
 import { ProfileCard } from "@/features/settings/components/ProfileCard";
 import { ClinicCard } from "@/features/settings/components/ClinicCard";
 import { LegalCard } from "@/features/settings/components/LegalCard";
 import { SignatureCard } from "@/features/settings/components/SignatureCard";
+import { DeleteAccountCard } from "@/features/settings/components/DeleteAccountCard";
 
-// 1. UPDATE SCHEMA
 const settingsSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   title: z.string().optional(),
@@ -24,7 +23,6 @@ const settingsSchema = z.object({
   email: z.string().email("Please enter a valid email."),
   contactNumber: z.string().optional(),
 
-  // Clinic Fields
   clinicAddress: z.string().optional(),
   clinicAvailability: z.string().optional(),
 
@@ -38,11 +36,10 @@ type SettingsValues = z.infer<typeof settingsSchema>;
 export default function Settings() {
   const [signaturePreview, setSignaturePreview] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [hasLoaded, setHasLoaded] = useState(false); // Track initial load
+  const [hasLoaded, setHasLoaded] = useState(false);
   const sigCanvasRef = useRef<SignatureCanvas>(null);
   const { user, setUser } = useContext(AuthContext)!;
 
-  // --- FORM INIT ---
   const form = useForm<SettingsValues>({
     resolver: zodResolver(settingsSchema),
     defaultValues: {
@@ -59,7 +56,6 @@ export default function Settings() {
     },
   });
 
-  // --- FETCH DATA (only on mount) ---
   useEffect(() => {
     const fetchProfile = async () => {
       if (hasLoaded) return; // Prevent re-fetching
@@ -67,7 +63,6 @@ export default function Settings() {
       try {
         const data = await authService.getProfile();
 
-        // Create the reset data object
         const resetData = {
           name: data.name || "",
           title: data.title || "",
@@ -81,10 +76,8 @@ export default function Settings() {
           s2No: data.s2No || "",
         };
 
-        // Reset form with fetched data
         form.reset(resetData);
 
-        // Set signature preview if exists
         if (data.signatureUrl) {
           setSignaturePreview(data.signatureUrl);
         }
@@ -99,12 +92,9 @@ export default function Settings() {
     fetchProfile();
   }, [form, hasLoaded]);
 
-  // --- SYNC FORM WITH CONTEXT (when context changes externally) ---
   useEffect(() => {
     if (!user || hasLoaded) return;
 
-    // Only sync if form hasn't been manually modified
-    // You can add more sophisticated dirty checking here
     const currentValues = form.getValues();
     const isFormEmpty = Object.values(currentValues).every(
       (val) => val === "" || val === undefined,
@@ -201,7 +191,7 @@ export default function Settings() {
         description: "Your profile information has been saved.",
       });
 
-      // 6. Mark form as clean (optional, if using formState.isDirty)
+      // 6. Mark form as clean
       form.reset(data, { keepValues: true });
     } catch (error) {
       console.error("Failed to save settings:", error);
@@ -290,6 +280,9 @@ export default function Settings() {
           </div>
         </form>
       </Form>
+
+      {/* DELETE ACCOUNT SECTION */}
+      <DeleteAccountCard />
     </div>
   );
 }

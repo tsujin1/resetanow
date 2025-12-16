@@ -54,5 +54,3 @@ export function usePatientHistory(patientId: string | undefined) {
     refreshHistory,
   };
 }
-
-

@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState, ReactNode } from "react";
+import { useContext, useEffect, useState, type ReactNode } from "react";
 import { Navigate, useSearchParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { AuthContext } from "@/shared/context/AuthContext";

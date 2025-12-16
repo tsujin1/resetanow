@@ -96,16 +96,26 @@ export const loginDoctor = async (req: Request, res: Response) => {
 
     const doctor = await Doctor.findOne({ email: emailValidation.sanitized });
 
-    if (doctor && (await bcrypt.compare(password, doctor.password))) {
-      res.json({
-        _id: doctor.id,
-        name: doctor.name,
-        email: doctor.email,
-        token: generateToken(doctor.id),
-      });
-    } else {
-      res.status(401).json({ message: "Invalid credentials" });
+    // Check if account exists
+    if (!doctor) {
+      res.status(404).json({ message: "Account not found with this email address" });
+      return;
     }
+
+    // Verify password
+    const isPasswordValid = await bcrypt.compare(password, doctor.password);
+    if (!isPasswordValid) {
+      res.status(401).json({ message: "Invalid password" });
+      return;
+    }
+
+    // Login successful
+    res.json({
+      _id: doctor.id,
+      name: doctor.name,
+      email: doctor.email,
+      token: generateToken(doctor.id),
+    });
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ message: "Server error" });
@@ -250,13 +260,22 @@ export const resetPassword = async (req: Request, res: Response) => {
       return;
     }
 
-    const doctor = await Doctor.findOne({
-      email,
-      resetToken: token,
-      resetTokenExpiry: { $gt: new Date() }, // Token not expired
-    });
+    // Validate and sanitize email
+    const emailValidation = validateAndSanitizeEmail(email);
+    if (!emailValidation.isValid) {
+      res.status(400).json({ message: "Invalid email format" });
+      return;
+    }
 
+    // Check if account exists first
+    const doctor = await Doctor.findOne({ email: emailValidation.sanitized });
     if (!doctor) {
+      res.status(404).json({ message: "Account not found with this email address" });
+      return;
+    }
+
+    // Check if token matches and is not expired
+    if (doctor.resetToken !== token || !doctor.resetTokenExpiry || doctor.resetTokenExpiry <= new Date()) {
       res.status(400).json({ message: "Invalid or expired reset token" });
       return;
     }
@@ -274,6 +293,43 @@ export const resetPassword = async (req: Request, res: Response) => {
     res.json({ message: "Password has been reset successfully" });
   } catch (error) {
     console.error("Reset password error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// @desc    Delete doctor account
+// @route   DELETE /api/auth/account
+// @access  Private
+export const deleteAccount = async (req: Request, res: Response) => {
+  try {
+    const { password } = req.body;
+
+    if (!password) {
+      res.status(400).json({ message: "Password is required to delete account" });
+      return;
+    }
+
+    const doctorId = (req as any).user._id;
+    const doctor = await Doctor.findById(doctorId);
+
+    if (!doctor) {
+      res.status(404).json({ message: "Doctor not found" });
+      return;
+    }
+
+    // Verify password before deletion
+    const isPasswordValid = await bcrypt.compare(password, doctor.password);
+    if (!isPasswordValid) {
+      res.status(401).json({ message: "Invalid password" });
+      return;
+    }
+
+    // Delete the doctor account
+    await Doctor.findByIdAndDelete(doctorId);
+
+    res.json({ message: "Account deleted successfully" });
+  } catch (error) {
+    console.error("Delete account error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };

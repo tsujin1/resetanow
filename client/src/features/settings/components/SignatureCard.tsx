@@ -1,4 +1,3 @@
-/* eslint-disable no-undef */
 import { useState } from "react";
 import SignatureCanvas from "react-signature-canvas";
 import { Upload, X, PenTool, Eraser, FileBadge } from "lucide-react";
@@ -15,7 +14,6 @@ import {
 interface SignatureCardProps {
   signaturePreview: string | null;
   setSignaturePreview: (val: string | null) => void;
-  // FIXED: Allow null in the ref type to match useRef(null)
   sigCanvasRef: React.RefObject<SignatureCanvas | null>;
   onClear: () => void;
   onSaveDraw: () => void;

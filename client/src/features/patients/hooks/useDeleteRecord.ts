@@ -41,5 +41,3 @@ export function useDeleteRecord(onSuccess: () => void | Promise<void>) {
     handleDelete,
   };
 }
-
-

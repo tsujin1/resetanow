@@ -167,7 +167,7 @@ export default function AddPatientDialog({
                         type="number"
                         placeholder="0"
                         {...field}
-                        value={field.value === 0 ? "" : field.value}
+                        value={field.value === 0 ? "" : String(field.value)}
                         onChange={(e) => {
                           const value = e.target.value;
                           // If field is empty or user is typing, allow empty string

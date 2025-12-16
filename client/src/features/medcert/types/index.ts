@@ -7,6 +7,6 @@ export interface IMedCert {
   reason: string;
   diagnosis: string;
   recommendation: string;
-  amount: number; // For billing dashboard
+  amount: number;
   createdAt?: string;
 }

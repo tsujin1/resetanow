@@ -1,8 +1,8 @@
 export interface IDoctor {
-  _id?: string; // Optional because it might not exist before first save
+  _id?: string;
   name: string;
-  title: string; // e.g. "MD, RMT"
-  role: string; // e.g. "General Physician" (Mapped to 'specialty' in UI)
+  title: string;
+  role: string;
   email: string;
   contactNumber: string;
   clinicAddress: string;

@@ -106,6 +106,13 @@ export function ResetPasswordForm({
         "Failed to reset password. Please try again.";
 
       if (
+        apiError.response?.status === 404 ||
+        errorMessage.toLowerCase().includes("account not found")
+      ) {
+        setError(
+          "No account found with this email address. Please check your email or sign up for a new account.",
+        );
+      } else if (
         apiError.response?.status === 400 &&
         errorMessage.toLowerCase().includes("expired")
       ) {
@@ -127,7 +134,17 @@ export function ResetPasswordForm({
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !isLoading) {
-      handleSubmit(e as any);
+      // Create a synthetic form event for handleSubmit
+      const form = (e.currentTarget as HTMLElement).closest("form");
+      if (form) {
+        const syntheticEvent = {
+          ...e,
+          preventDefault: () => e.preventDefault(),
+          currentTarget: form,
+          target: form,
+        } as unknown as React.FormEvent<HTMLFormElement>;
+        handleSubmit(syntheticEvent);
+      }
     }
   };
 
@@ -300,5 +317,3 @@ export function ResetPasswordForm({
     </div>
   );
 }
-
-

@@ -16,7 +16,6 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ForgotPasswordDialog } from "./ForgotPasswordDialog";
 
-// Define the error shape (same as we did in Register)
 interface ApiError {
   response?: {
     data?: {
@@ -37,18 +36,15 @@ export function LoginForm({
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
   const [searchParams] = useSearchParams();
 
-  // 1. Hook into your real Auth Context
   const { login } = useContext(AuthContext)!;
   const navigate = useNavigate();
 
-  // Check for error message from URL params (e.g., invalid reset link)
   useEffect(() => {
     const errorParam = searchParams.get("error");
     if (errorParam === "invalid_reset_link") {
       setError(
         "Invalid or expired password reset link. Please request a new one.",
       );
-      // Clear the error param from URL
       navigate("/login", { replace: true });
     }
   }, [searchParams, navigate]);
@@ -62,7 +58,6 @@ export function LoginForm({
     setError("");
     setIsLoading(true);
 
-    // Client-side validation
     if (!formData.email || !formData.password) {
       setError("Please enter both email and password.");
       setIsLoading(false);
@@ -70,26 +65,34 @@ export function LoginForm({
     }
 
     try {
-      // 2. REAL API CALL (Replaces the simulation)
       await login(formData);
 
       console.log("Login successful");
-      navigate("/"); // Redirect to dashboard
+      navigate("/");
     } catch (err: unknown) {
       const apiError = err as ApiError;
       const status = apiError.response?.status;
       const errorMessage =
         apiError.response?.data?.message || apiError.message || "Login failed.";
 
-      // 3. Map Backend Errors to UI Alerts
-      if (status === 404 || errorMessage.toLowerCase().includes("not found")) {
-        setError("No account found with this email address.");
+      if (
+        status === 404 ||
+        errorMessage.toLowerCase().includes("account not found") ||
+        errorMessage.toLowerCase().includes("not found with this email")
+      ) {
+        setError(
+          "No account found with this email address. Please check your email or sign up for a new account.",
+        );
       } else if (
         status === 401 ||
+        errorMessage.toLowerCase().includes("invalid password")
+      ) {
+        setError("Invalid password. Please check your password and try again.");
+      } else if (
         status === 400 ||
         errorMessage.toLowerCase().includes("invalid")
       ) {
-        setError("Invalid credentials. Please check your password.");
+        setError("Invalid credentials. Please check your email and password.");
       } else {
         setError("Something went wrong. Please try again later.");
       }

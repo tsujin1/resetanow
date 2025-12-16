@@ -21,6 +21,8 @@ export default [
       globals: {
         ...globals.browser,
         ...globals.node,
+        React: "readonly",
+        JSX: "readonly",
       },
     },
     plugins: {
@@ -31,15 +33,17 @@ export default [
     },
     rules: {
       ...ts.configs.recommended.rules,
+      ...react.configs.recommended.rules,
 
-      // React 18: no need to import React in scope
       "react/react-in-jsx-scope": "off",
+      "react/prop-types": "off",
 
-      // React Hooks rules
       "react-hooks/rules-of-hooks": "error",
       "react-hooks/exhaustive-deps": "warn",
 
-      // Prettier integration
+      "react/no-unescaped-entities": "off",
+      "@typescript-eslint/no-explicit-any": "warn",
+
       "prettier/prettier": "error",
     },
     settings: {

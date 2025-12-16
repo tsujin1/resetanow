@@ -12,7 +12,6 @@ interface LoginData {
   password: string;
 }
 
-// --- Private Helpers ---
 const getStoredUser = () => {
   try {
     const userStr = localStorage.getItem("user");
@@ -38,7 +37,6 @@ const getConfig = () => {
   };
 };
 
-// --- Auth Services ---
 const register = async (userData: Partial<IDoctor>) => {
   const response = await axios.post(API_URL + "auth/register", userData);
   if (response.data) setStoredUser(response.data);
@@ -69,13 +67,12 @@ const getProfile = async () => {
     if (error instanceof AxiosError && error.response?.status === 404) {
       const user = getStoredUser();
       if (user) {
-        // Return stored user with all default fields to prevent UI errors
         return {
           title: "",
           role: "",
           contactNumber: "",
           clinicAddress: "",
-          clinicAvailability: "", // <--- ADDED HERE
+          clinicAvailability: "",
           licenseNo: "",
           ptrNo: "",
           s2No: "",
@@ -135,6 +132,23 @@ const resetPassword = async (
   return response.data;
 };
 
+const deleteAccount = async (password: string) => {
+  try {
+    const response = await axios.delete(API_URL + "auth/account", {
+      ...getConfig(),
+      data: { password },
+    });
+    return response.data;
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      throw new Error(
+        error.response?.data?.message || "Failed to delete account",
+      );
+    }
+    throw error;
+  }
+};
+
 const authService = {
   register,
   login,
@@ -143,6 +157,7 @@ const authService = {
   updateProfile,
   forgotPassword,
   resetPassword,
+  deleteAccount,
 };
 
 export default authService;

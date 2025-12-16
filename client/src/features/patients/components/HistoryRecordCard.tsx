@@ -3,14 +3,34 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDate, formatTime } from "../utils/patientUtils";
+import type { IPrescription } from "@/features/prescriptions/types";
+import type { IMedCert } from "@/features/medcert/types";
+
+type PrescriptionData = Pick<
+  IPrescription,
+  "diagnosis" | "medications" | "amount"
+>;
+type MedCertData = Pick<
+  IMedCert,
+  "reason" | "diagnosis" | "recommendation" | "amount"
+>;
+
+type HistoryRecordItem =
+  | {
+      type: "prescription";
+      id: string;
+      createdAt: string;
+      data: PrescriptionData;
+    }
+  | {
+      type: "medcert";
+      id: string;
+      createdAt: string;
+      data: MedCertData;
+    };
 
 interface HistoryRecordCardProps {
-  item: {
-    type: "prescription" | "medcert";
-    id: string;
-    createdAt: string;
-    data: any;
-  };
+  item: HistoryRecordItem;
   onDelete: (type: string, id: string) => void;
 }
 
@@ -69,7 +89,7 @@ export default function HistoryRecordCard({
                 </span>
               </div>
               <p className="text-sm text-slate-900 pl-6">
-                {item.data.diagnosis || "No diagnosis recorded"}
+                {item.data.diagnosis ?? "No diagnosis recorded"}
               </p>
             </div>
 
@@ -100,7 +120,7 @@ export default function HistoryRecordCard({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {item.data.medications.map((med: any, idx: number) => (
+                    {item.data.medications.map((med, idx: number) => (
                       <tr key={idx} className="bg-white">
                         <td className="px-3 sm:px-4 py-2.5 text-slate-900 font-medium">
                           {med.name}
@@ -174,5 +194,3 @@ export default function HistoryRecordCard({
     </Card>
   );
 }
-
-
