@@ -4,23 +4,8 @@ import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  Loader2,
-  User,
-  Mail,
-  Lock,
-  ArrowRight,
-  AlertCircle,
-  CheckCircle2,
-} from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 import authService from "@/features/auth/services/authService";
 import { cn } from "@/shared/lib/utils";
 
@@ -112,140 +97,155 @@ export function RegisterForm({
     }
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !isLoading) {
+      const syntheticEvent = {
+        ...e,
+        preventDefault: () => e.preventDefault(),
+        currentTarget: (e.currentTarget as HTMLElement).closest(
+          "form",
+        ) as HTMLFormElement,
+        target: (e.currentTarget as HTMLElement).closest(
+          "form",
+        ) as HTMLFormElement,
+      } as unknown as React.FormEvent<HTMLFormElement>;
+      handleSubmit(syntheticEvent);
+    }
+  };
+
+  // --- RENDERING ---
   return (
     <div className={cn("grid gap-6", className)} {...props}>
-      <Card className="border-border shadow-lg">
-        <CardHeader className="space-y-1 pb-6 pt-8 text-center">
-          <CardTitle className="text-2xl font-bold tracking-tight">
-            Create an account
-          </CardTitle>
-          <CardDescription>
-            Enter your details to set up your clinic workspace
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="grid gap-4">
-            {error && (
-              <Alert
-                variant="destructive"
-                className="animate-in fade-in-50 bg-destructive/10 border-destructive/20 text-destructive"
-              >
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
+      {/* Header Section - Clean text, no card header */}
+      <div className="flex flex-col space-y-2 text-left">
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+          Create an account
+        </h1>
+        <p className="text-sm text-slate-500">
+          Enter your details to set up your clinic workspace and start managing
+          patients securely.
+        </p>
+      </div>
+
+      {/* Error Alert */}
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {/* Form Fields - No Card Wrapper */}
+      <form onSubmit={handleSubmit} className="grid gap-6">
+        <div className="grid gap-2">
+          <Label htmlFor="name" className="text-slate-600">
+            Full Name
+          </Label>
+          <Input
+            id="name"
+            placeholder="Dr. Juan Dela Cruz"
+            disabled={isLoading}
+            value={formData.name}
+            onChange={handleChange}
+            onKeyPress={handleKeyPress}
+            className={cn(
+              "h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white transition-all",
+              error && "border-destructive focus-visible:ring-destructive",
             )}
+            required
+          />
+        </div>
 
-            {/* Full Name */}
-            <div className="grid gap-2">
-              <Label htmlFor="name">Full Name</Label>
-              <div className="relative">
-                <div className="absolute left-3 top-3 text-muted-foreground">
-                  <User className="h-4 w-4" />
-                </div>
-                <Input
-                  id="name"
-                  placeholder="Dr. Juan Dela Cruz"
-                  className="pl-9 h-10 bg-background"
-                  value={formData.name}
-                  onChange={handleChange}
-                  disabled={isLoading}
-                  required
-                />
-              </div>
-            </div>
+        <div className="grid gap-2">
+          <Label htmlFor="email" className="text-slate-600">
+            Email address
+          </Label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="doctor@clinic.com"
+            autoCapitalize="none"
+            autoComplete="email"
+            autoCorrect="off"
+            disabled={isLoading}
+            value={formData.email}
+            onChange={handleChange}
+            onKeyPress={handleKeyPress}
+            className={cn(
+              "h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white transition-all",
+              error && "border-destructive focus-visible:ring-destructive",
+            )}
+            required
+          />
+        </div>
 
-            {/* Email */}
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <div className="absolute left-3 top-3 text-muted-foreground">
-                  <Mail className="h-4 w-4" />
-                </div>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="doctor@clinic.com"
-                  className={cn(
-                    "pl-9 h-10 bg-background",
-                    error.includes("email") &&
-                      "border-destructive focus-visible:ring-destructive",
-                  )}
-                  value={formData.email}
-                  onChange={handleChange}
-                  disabled={isLoading}
-                  required
-                />
-              </div>
-            </div>
+        <div className="grid gap-2">
+          <Label htmlFor="password" className="text-slate-600">
+            Password
+          </Label>
+          <Input
+            id="password"
+            type="password"
+            placeholder="••••••••"
+            disabled={isLoading}
+            value={formData.password}
+            onChange={handleChange}
+            onKeyPress={handleKeyPress}
+            className={cn(
+              "h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white transition-all",
+              error && "border-destructive focus-visible:ring-destructive",
+            )}
+            required
+          />
+        </div>
 
-            {/* Password */}
-            <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <div className="absolute left-3 top-3 text-muted-foreground">
-                  <Lock className="h-4 w-4" />
-                </div>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  className="pl-9 h-10 bg-background"
-                  value={formData.password}
-                  onChange={handleChange}
-                  disabled={isLoading}
-                  required
-                />
-              </div>
-            </div>
+        <div className="grid gap-2">
+          <Label htmlFor="confirmPassword" className="text-slate-600">
+            Confirm Password
+          </Label>
+          <Input
+            id="confirmPassword"
+            type="password"
+            placeholder="••••••••"
+            disabled={isLoading}
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            onKeyPress={handleKeyPress}
+            className={cn(
+              "h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white transition-all",
+              error && "border-destructive focus-visible:ring-destructive",
+            )}
+            required
+          />
+        </div>
 
-            {/* Confirm Password */}
-            <div className="grid gap-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <div className="relative">
-                <div className="absolute left-3 top-3 text-muted-foreground">
-                  <CheckCircle2 className="h-4 w-4" />
-                </div>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  placeholder="••••••••"
-                  className="pl-9 h-10 bg-background"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  disabled={isLoading}
-                  required
-                />
-              </div>
-            </div>
-
-            <Button
-              className="mt-2 w-full h-10 font-semibold transition-all"
-              type="submit"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating account...
-                </>
-              ) : (
-                <>
-                  Register <ArrowRight className="ml-2 h-4 w-4" />
-                </>
-              )}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-
-      <div className="text-center text-sm text-muted-foreground">
-        Already have an account?{" "}
-        <Link
-          to="/login"
-          className="font-medium text-primary hover:underline underline-offset-4"
+        <Button
+          className="mt-2 h-12 w-full rounded-xl text-base font-medium shadow-lg shadow-primary/20 transition-all hover:shadow-primary/40"
+          type="submit"
+          disabled={isLoading}
         >
-          Sign In
-        </Link>
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Creating account...
+            </>
+          ) : (
+            "Create account →"
+          )}
+        </Button>
+      </form>
+
+      {/* Footer Links */}
+      <div className="flex flex-col items-center gap-4 text-center text-sm text-slate-500">
+        <p>
+          Already have an account?{" "}
+          <Link
+            to="/login"
+            className="font-medium text-primary hover:underline underline-offset-4"
+          >
+            Sign in
+          </Link>
+        </p>
       </div>
     </div>
   );

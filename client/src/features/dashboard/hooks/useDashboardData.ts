@@ -40,7 +40,6 @@ const initialSourceData: SourceData[] = [
   { name: "Medical Certificate", value: 0, color: "#64748b" },
 ];
 
-// Move monthNames outside to avoid recreation
 const monthNames = [
   "Jan",
   "Feb",
@@ -56,7 +55,6 @@ const monthNames = [
   "Dec",
 ] as const;
 
-// Move helper functions outside component to avoid recreation
 const getSafeDate = (val: string | Date | null | undefined) => {
   if (!val) return null;
   const d = new Date(val);
@@ -74,7 +72,6 @@ const calculatePatientMetrics = (patients: Patient[], now: Date) => {
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
 
-  // Use for loop instead of filter for better performance
   let newPatientsCount = 0;
   for (let i = 0; i < patients.length; i++) {
     const p = patients[i];
@@ -111,7 +108,6 @@ const calculateRevenueMetrics = (
   let rxCountMonth = 0,
     mcCountMonth = 0;
 
-  // Use for loops for better performance
   for (let i = 0; i < prescriptions.length; i++) {
     const rx = prescriptions[i];
     const amt = getSafeAmount(rx.amount);
@@ -153,7 +149,6 @@ const calculateRevenueMetrics = (
   };
 };
 
-// Move dayMap outside to avoid recreation
 const dayMap = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 
 const calculateWeeklyData = (
@@ -161,14 +156,12 @@ const calculateWeeklyData = (
   medCerts: MedCert[],
   oneWeekAgo: Date,
 ) => {
-  // Use Object.create for faster initialization
   const newWeekly = initialWeeklyData.map((d) => ({ ...d }));
 
   const processWeekly = (
     items: (Prescription | MedCert)[],
     type: "prescription" | "medCert",
   ) => {
-    // Use for loop instead of forEach for better performance
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
       const d = getSafeDate(item.date || item.createdAt);
@@ -194,7 +187,6 @@ export function useDashboardData() {
     medCerts: MedCert[];
   } | null>(null);
 
-  // Fetch data only once - optimized with AbortController for cleanup
   useEffect(() => {
     let isMounted = true;
     const abortController = new AbortController();
@@ -202,14 +194,12 @@ export function useDashboardData() {
     const fetchDashboardData = async () => {
       setIsLoading(true);
       try {
-        // Use Promise.allSettled for parallel fetching
         const [resP, resRx, resMc] = await Promise.allSettled([
           patientService.getPatients(),
           prescriptionService.getPrescriptions(),
           medCertService.getMedCerts(),
         ]);
 
-        // Only update state if component is still mounted
         if (!isMounted) return;
 
         const patients =
@@ -328,27 +318,123 @@ export function useDashboardData() {
   const exportCSV = useMemo(
     () => async () => {
       setIsExporting(true);
-      // Add slight delay for smooth UX feedback
       await new Promise((resolve) => setTimeout(resolve, 300));
 
-      const csvContent =
-        "data:text/csv;charset=utf-8," +
-        [
-          "Category,Total",
-          `Revenue,${metrics.revenue.total}`,
-          `Patients,${metrics.patients.total}`,
-        ].join("\n");
-      const encodedUri = encodeURI(csvContent);
+      // Calculate month-over-month growth
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const prevMonth = currentMonth > 0 ? currentMonth - 1 : 11;
+      const currentMonthRevenue = monthlyChartData.find(
+        (m) => m.name === monthNames[currentMonth],
+      )?.revenue || 0;
+      const prevMonthRevenue = monthlyChartData.find(
+        (m) => m.name === monthNames[prevMonth],
+      )?.revenue || 0;
+      const monthOverMonthGrowth =
+        prevMonthRevenue > 0
+          ? ((currentMonthRevenue - prevMonthRevenue) / prevMonthRevenue) * 100
+          : currentMonthRevenue > 0
+            ? 100
+            : 0;
+
+      // Calculate total revenue for percentages
+      const totalRevenue = revenueSource.reduce((sum, source) => sum + source.value, 0);
+
+      // Calculate date range (Last 30 Days)
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - 30);
+      const dateRange = `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`;
+
+      // Build CSV content with all sections
+      const csvRows: string[] = [];
+
+      // Header
+      csvRows.push("CLINIC REPORT");
+      csvRows.push(`Report Period: ${dateRange} (Last 30 Days)`);
+      csvRows.push("");
+
+      // Summary Metrics
+      csvRows.push("SUMMARY METRICS");
+      csvRows.push("Category,Total,This Month");
+      csvRows.push(`Total Patients,${metrics.patients.total},${metrics.patients.growth}% growth`);
+      csvRows.push(`Prescriptions Issued,${metrics.prescriptions.total},${metrics.prescriptions.monthly}`);
+      csvRows.push(`Medical Certificates Issued,${metrics.medCerts.total},${metrics.medCerts.monthly}`);
+      csvRows.push(`Total Revenue,₱${metrics.revenue.total.toLocaleString()},₱${metrics.revenue.monthly.toLocaleString()}`);
+      csvRows.push("");
+
+      // Weekly Analysis
+      csvRows.push("WEEKLY ANALYSIS (Last 7 Days)");
+      csvRows.push("Day,Prescription Revenue,Medical Certificate Revenue,Daily Total");
+      weeklyData.forEach((day) => {
+        const dailyTotal = day.prescription + day.medCert;
+        csvRows.push(
+          `${day.name},₱${day.prescription.toLocaleString()},₱${day.medCert.toLocaleString()},₱${dailyTotal.toLocaleString()}`,
+        );
+      });
+      csvRows.push("");
+
+      // Monthly Growth Data
+      csvRows.push("MONTHLY GROWTH DATA");
+      csvRows.push("Month,Revenue,Month-over-Month Growth");
+      monthlyChartData.forEach((month, index) => {
+        const prevMonthRev =
+          index > 0 ? monthlyChartData[index - 1]?.revenue || 0 : 0;
+        const growth =
+          prevMonthRev > 0
+            ? ((month.revenue - prevMonthRev) / prevMonthRev) * 100
+            : month.revenue > 0
+              ? 100
+              : 0;
+        const growthText =
+          index === 0 ? "-" : `${growth >= 0 ? "+" : ""}${growth.toFixed(1)}%`;
+        csvRows.push(
+          `${month.name},₱${month.revenue.toLocaleString()},${growthText}`,
+        );
+      });
+      csvRows.push(`Current Month Growth: ${monthOverMonthGrowth >= 0 ? "+" : ""}${monthOverMonthGrowth.toFixed(1)}%`);
+      csvRows.push("");
+
+      // Revenue Sources Breakdown
+      csvRows.push("REVENUE SOURCES BREAKDOWN");
+      csvRows.push("Source,Amount,Percentage");
+      revenueSource.forEach((source) => {
+        const percentage =
+          totalRevenue > 0 ? (source.value / totalRevenue) * 100 : 0;
+        csvRows.push(
+          `${source.name},₱${source.value.toLocaleString()},${percentage.toFixed(1)}%`,
+        );
+      });
+      csvRows.push(`Total,₱${totalRevenue.toLocaleString()},100.0%`);
+
+      // Create CSV
+      const csvContent = csvRows.join("\n");
+      const BOM = "\uFEFF";
+      const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.setAttribute("href", encodedUri);
+      link.setAttribute("href", url);
       link.setAttribute("download", "clinic_report.csv");
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
 
       setIsExporting(false);
     },
-    [metrics.revenue.total, metrics.patients.total],
+    [
+      metrics.revenue.total,
+      metrics.revenue.monthly,
+      metrics.patients.total,
+      metrics.patients.growth,
+      metrics.prescriptions.total,
+      metrics.prescriptions.monthly,
+      metrics.medCerts.total,
+      metrics.medCerts.monthly,
+      weeklyData,
+      revenueSource,
+      monthlyChartData,
+    ],
   );
 
   return {
