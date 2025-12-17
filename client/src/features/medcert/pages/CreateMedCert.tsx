@@ -1,4 +1,11 @@
-import { useRef, useState, useEffect, useContext, useCallback } from "react";
+import {
+  useRef,
+  useState,
+  useEffect,
+  useContext,
+  useCallback,
+  useMemo,
+} from "react";
 import { useSearchParams } from "react-router-dom";
 import { useForm, useWatch, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,9 +16,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AuthContext } from "@/shared/context/AuthContext";
 import patientService from "@/features/patients/services/patientService";
 import medCertService from "@/features/medcert/services/medCertService";
+import authService from "@/features/auth/services/authService";
 import type { IPatient } from "@/features/patients/types";
 
-// Import schema and type
 import {
   medCertSchema,
   type MedCertValues,
@@ -27,11 +34,17 @@ import { MedCertTemplate } from "@/shared/templates/MedCertTemplate";
 
 export default function CreateMedCert() {
   const componentRef = useRef<HTMLDivElement>(null);
-  const { user } = useContext(AuthContext) || {};
+  const hasRefreshedUserRef = useRef(false);
+  const {
+    user,
+    isLoading: isLoadingUser,
+    setUser,
+  } = useContext(AuthContext) || {};
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [patients, setPatients] = useState<IPatient[]>([]);
   const [isLoadingPatients, setIsLoadingPatients] = useState(true);
+  const [isRefreshingUser, setIsRefreshingUser] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
   const patientId = searchParams.get("patientId");
@@ -52,8 +65,7 @@ export default function CreateMedCert() {
   const values = useWatch({ control: form.control });
   const selectedPatient = patients.find((p) => p._id === values.patientId);
 
-  // Logic to determine if download is allowed
-  const canDownload = !!selectedPatient && !isLoadingPatients;
+  const canDownload = !!selectedPatient && !isLoadingPatients && !isLoadingUser;
 
   const fetchPatients = useCallback(async () => {
     try {
@@ -81,6 +93,32 @@ export default function CreateMedCert() {
   }, [patientId, patientName, form]);
 
   useEffect(() => {
+    const refreshUserProfile = async () => {
+      if (isLoadingUser || isRefreshingUser || hasRefreshedUserRef.current)
+        return;
+      if (!user || !setUser) return;
+
+      try {
+        setIsRefreshingUser(true);
+        hasRefreshedUserRef.current = true;
+        const userData = await authService.getProfile();
+        if (userData) {
+          setUser(userData);
+        }
+      } catch (error) {
+        console.error("Failed to refresh user profile:", error);
+        hasRefreshedUserRef.current = false;
+      } finally {
+        setIsRefreshingUser(false);
+      }
+    };
+
+    if (!isLoadingUser && user) {
+      refreshUserProfile();
+    }
+  }, [isLoadingUser, user, setUser, isRefreshingUser]);
+
+  useEffect(() => {
     fetchPatients();
   }, [fetchPatients]);
 
@@ -99,6 +137,14 @@ export default function CreateMedCert() {
     setIsGenerating(true);
 
     try {
+      await new Promise((resolve) => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            setTimeout(resolve, 50);
+          });
+        });
+      });
+
       const html2canvas = (await import("html2canvas-pro")).default;
       const { jsPDF } = await import("jspdf");
 
@@ -153,6 +199,21 @@ export default function CreateMedCert() {
       setIsSaving(false);
     }
   };
+
+  const safeDoctorData = useMemo(() => {
+    if (!user) return null;
+    return {
+      name: user.name || "",
+      title: user.title || "",
+      specialty: user.role || "General Physician",
+      contactNumber: user.contactNumber || "",
+      email: user.email || "",
+      licenseNo: user.licenseNo || "",
+      ptrNo: user.ptrNo || "",
+      s2No: user.s2No || "",
+      signatureUrl: user.signatureUrl || null,
+    };
+  }, [user]);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -209,31 +270,27 @@ export default function CreateMedCert() {
 
       {/* OFF-SCREEN TEMPLATE */}
       <div style={{ position: "absolute", left: "-9999px", top: "-9999px" }}>
-        {!isLoadingPatients && (
-          <MedCertTemplate
-            ref={componentRef}
-            data={{
-              patientName: selectedPatient?.name,
-              age: selectedPatient?.age,
-              sex: selectedPatient?.gender,
-              address: selectedPatient?.address,
-              date: values.date || "",
-              reason: values.reason || "",
-              diagnosis: values.diagnosis || "",
-              recommendation: values.recommendation || "",
-            }}
-            doctor={{
-              name: user?.name || "",
-              title: user?.title || "",
-              specialty: user?.role || "General Physician",
-              contactNumber: user?.contactNumber || "",
-              email: user?.email || "",
-              licenseNo: user?.licenseNo || "",
-              ptrNo: user?.ptrNo || "",
-              signatureUrl: user?.signatureUrl || null,
-            }}
-          />
-        )}
+        {!isLoadingPatients &&
+          !isLoadingUser &&
+          !isRefreshingUser &&
+          user &&
+          safeDoctorData && (
+            <MedCertTemplate
+              key={`medcert-${user._id || ""}-${selectedPatient?._id || ""}-${values.date || ""}-${values.reason || ""}-${values.diagnosis || ""}-${values.recommendation || ""}`}
+              ref={componentRef}
+              data={{
+                patientName: selectedPatient?.name,
+                age: selectedPatient?.age,
+                sex: selectedPatient?.gender,
+                address: selectedPatient?.address,
+                date: values.date || "",
+                reason: values.reason || "",
+                diagnosis: values.diagnosis || "",
+                recommendation: values.recommendation || "",
+              }}
+              doctor={safeDoctorData}
+            />
+          )}
       </div>
     </div>
   );

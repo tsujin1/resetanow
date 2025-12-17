@@ -9,6 +9,7 @@ import { AuthContext } from "@/shared/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { toast } from "sonner";
+import type { IDoctor } from "@/features/settings/types";
 
 import { ProfileCard } from "@/features/settings/components/ProfileCard";
 import { ClinicCard } from "@/features/settings/components/ClinicCard";
@@ -58,7 +59,7 @@ export default function Settings() {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      if (hasLoaded) return; // Prevent re-fetching
+      if (hasLoaded) return;
 
       try {
         const data = await authService.getProfile();
@@ -122,7 +123,6 @@ export default function Settings() {
     }
   }, [user, form, hasLoaded]);
 
-  // --- SIGNATURE HANDLERS ---
   const clearSignature = () => {
     sigCanvasRef.current?.clear();
     setSignaturePreview(null);
@@ -135,13 +135,11 @@ export default function Settings() {
     }
   };
 
-  // --- SUBMIT ---
   async function onSubmit(data: SettingsValues) {
     setIsSaving(true);
     toast.dismiss();
 
     try {
-      // 1. Prepare Payload
       let finalSignature = signaturePreview;
       if (sigCanvasRef.current && !sigCanvasRef.current.isEmpty()) {
         finalSignature = sigCanvasRef.current.toDataURL("image/png");
@@ -149,49 +147,64 @@ export default function Settings() {
 
       const payload = {
         ...data,
-        signatureUrl: finalSignature || "",
+        title: data.title || undefined,
+        role: data.role || undefined,
+        contactNumber: data.contactNumber || undefined,
+        clinicAddress: data.clinicAddress || undefined,
+        clinicAvailability: data.clinicAvailability || undefined,
+        ptrNo: data.ptrNo || undefined,
+        s2No: data.s2No !== undefined ? data.s2No : undefined,
+        signatureUrl: finalSignature || undefined,
       };
 
-      // 2. Send to Backend
       const result = await authService.updateProfile(payload);
 
-      // 3. Update Local Preview
       if (result.signatureUrl) {
         setSignaturePreview(result.signatureUrl);
       }
 
-      // 4. Update Global Context & Local Storage
       if (user && setUser) {
-        const updatedUserLocal = {
-          ...user,
-          // Update all fields from form data
-          name: data.name,
-          email: data.email,
-          title: data.title || "",
-          role: data.role || "",
-          contactNumber: data.contactNumber || "",
-          clinicAddress: data.clinicAddress || "",
-          clinicAvailability: data.clinicAvailability || "",
-          licenseNo: data.licenseNo || "",
-          ptrNo: data.ptrNo || "",
-          s2No: data.s2No || "",
-          // Update signature
-          signatureUrl: result.signatureUrl || user.signatureUrl || "",
-        };
-
-        // Update State
-        setUser(updatedUserLocal);
-
-        // Update Local Storage
-        localStorage.setItem("user", JSON.stringify(updatedUserLocal));
+        const storedUserStr = localStorage.getItem("user");
+        if (storedUserStr) {
+          try {
+            const storedUser = JSON.parse(storedUserStr);
+            const updatedStoredUser = {
+              ...storedUser,
+              ...result,
+              s2No:
+                data.s2No === "" ? "" : (result.s2No ?? storedUser.s2No ?? ""),
+            };
+            setUser(updatedStoredUser);
+            localStorage.setItem("user", JSON.stringify(updatedStoredUser));
+          } catch (error) {
+            console.error("Failed to parse stored user:", error);
+            const userWithToken = user as IDoctor & { token?: string };
+            const updatedUserLocal = {
+              ...user,
+              token: userWithToken.token,
+              ...result,
+              s2No: data.s2No === "" ? "" : (result.s2No ?? user.s2No ?? ""),
+            };
+            setUser(updatedUserLocal);
+            localStorage.setItem("user", JSON.stringify(updatedUserLocal));
+          }
+        } else {
+          const userWithToken = user as IDoctor & { token?: string };
+          const updatedUserLocal = {
+            ...user,
+            token: userWithToken.token,
+            ...result,
+            s2No: data.s2No === "" ? "" : (result.s2No ?? user.s2No ?? ""),
+          };
+          setUser(updatedUserLocal);
+          localStorage.setItem("user", JSON.stringify(updatedUserLocal));
+        }
       }
 
-      // 5. Show success message
       toast.success("Settings updated successfully", {
         description: "Your profile information has been saved.",
       });
 
-      // 6. Mark form as clean
       form.reset(data, { keepValues: true });
     } catch (error) {
       console.error("Failed to save settings:", error);

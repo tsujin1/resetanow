@@ -161,14 +161,14 @@ export const updateProfile = async (req: Request, res: Response) => {
     if (doctor) {
       doctor.name = req.body.name || doctor.name;
       doctor.email = req.body.email || doctor.email;
-      doctor.title = req.body.title || doctor.title;
-      doctor.role = req.body.role || doctor.role;
-      doctor.contactNumber = req.body.contactNumber || doctor.contactNumber;
-      doctor.clinicAddress = req.body.clinicAddress || doctor.clinicAddress;
-      doctor.clinicAvailability = req.body.clinicAvailability || doctor.clinicAvailability; // <--- ADDED HERE
+      doctor.title = req.body.title !== undefined ? req.body.title : doctor.title;
+      doctor.role = req.body.role !== undefined ? req.body.role : doctor.role;
+      doctor.contactNumber = req.body.contactNumber !== undefined ? req.body.contactNumber : doctor.contactNumber;
+      doctor.clinicAddress = req.body.clinicAddress !== undefined ? req.body.clinicAddress : doctor.clinicAddress;
+      doctor.clinicAvailability = req.body.clinicAvailability !== undefined ? req.body.clinicAvailability : doctor.clinicAvailability;
       doctor.licenseNo = req.body.licenseNo || doctor.licenseNo;
-      doctor.ptrNo = req.body.ptrNo || doctor.ptrNo;
-      doctor.s2No = req.body.s2No || doctor.s2No;
+      doctor.ptrNo = req.body.ptrNo !== undefined ? req.body.ptrNo : doctor.ptrNo;
+      doctor.s2No = req.body.s2No !== undefined ? req.body.s2No : doctor.s2No; // Allow empty string to clear the field
       doctor.signatureUrl = req.body.signatureUrl !== undefined ? req.body.signatureUrl : doctor.signatureUrl;
 
       const updatedDoctor = await doctor.save();

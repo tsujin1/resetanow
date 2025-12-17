@@ -1,36 +1,5 @@
-import axios, { AxiosError } from "axios";
+import { apiClient, AxiosError } from "@/shared/lib/apiClient";
 import type { IMedCert } from "@/features/medcert/types";
-
-const getApiUrl = () => {
-  const url = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-  return url.endsWith("/") ? url : url + "/";
-};
-const API_URL = getApiUrl();
-
-// --- Private Helpers ---
-const getStoredUser = () => {
-  try {
-    const userStr = localStorage.getItem("user");
-    return userStr ? JSON.parse(userStr) : null;
-  } catch {
-    return null;
-  }
-};
-
-const getConfig = () => {
-  const user = getStoredUser();
-  if (!user?.token) throw new Error("No auth token found");
-
-  return {
-    headers: {
-      Authorization: `Bearer ${user.token}`,
-      "Content-Type": "application/json",
-      "Cache-Control": "no-cache, no-store, must-revalidate",
-      Pragma: "no-cache",
-      Expires: "0",
-    },
-  };
-};
 
 // --- Medical Certificate Services ---
 
@@ -39,15 +8,18 @@ const getConfig = () => {
  */
 const getMedCerts = async (): Promise<IMedCert[]> => {
   try {
-    const response = await axios.get(API_URL + "medcerts", {
-      ...getConfig(),
-      params: { _t: Date.now() }, // Cache busting query parameter
+    const response = await apiClient.get("medcerts", {
+      params: { _t: Date.now() },
+      headers: {
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        Pragma: "no-cache",
+        Expires: "0",
+      },
     });
     return response.data;
   } catch (error) {
     if (error instanceof AxiosError) {
       if (error.response?.status === 404) {
-        // No med certs found, return empty array
         return [];
       }
       throw new Error(
@@ -63,7 +35,7 @@ const getMedCerts = async (): Promise<IMedCert[]> => {
  */
 const getMedCertById = async (id: string): Promise<IMedCert> => {
   try {
-    const response = await axios.get(API_URL + `medcerts/${id}`, getConfig());
+    const response = await apiClient.get(`medcerts/${id}`);
     return response.data;
   } catch (error) {
     if (error instanceof AxiosError) {
@@ -82,11 +54,7 @@ const createMedCert = async (
   medCertData: Omit<IMedCert, "_id" | "createdAt">,
 ): Promise<IMedCert> => {
   try {
-    const response = await axios.post(
-      API_URL + "medcerts",
-      medCertData,
-      getConfig(),
-    );
+    const response = await apiClient.post("medcerts", medCertData);
     return response.data;
   } catch (error) {
     if (error instanceof AxiosError) {
@@ -106,11 +74,7 @@ const updateMedCert = async (
   medCertData: Partial<IMedCert>,
 ): Promise<IMedCert> => {
   try {
-    const response = await axios.put(
-      API_URL + `medcerts/${id}`,
-      medCertData,
-      getConfig(),
-    );
+    const response = await apiClient.put(`medcerts/${id}`, medCertData);
     return response.data;
   } catch (error) {
     if (error instanceof AxiosError) {
@@ -127,7 +91,7 @@ const updateMedCert = async (
  */
 const deleteMedCert = async (id: string): Promise<void> => {
   try {
-    await axios.delete(API_URL + `medcerts/${id}`, getConfig());
+    await apiClient.delete(`medcerts/${id}`);
   } catch (error) {
     if (error instanceof AxiosError) {
       throw new Error(

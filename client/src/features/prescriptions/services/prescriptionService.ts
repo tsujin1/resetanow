@@ -1,33 +1,5 @@
-import axios, { AxiosError } from "axios";
+import { apiClient, AxiosError } from "@/shared/lib/apiClient";
 import type { IPrescription } from "@/features/prescriptions/types";
-
-const getApiUrl = () => {
-  const url = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-  return url.endsWith("/") ? url : url + "/";
-};
-const API_URL = getApiUrl();
-
-// --- Private Helpers ---
-const getStoredUser = () => {
-  try {
-    const userStr = localStorage.getItem("user");
-    return userStr ? JSON.parse(userStr) : null;
-  } catch {
-    return null;
-  }
-};
-
-const getConfig = () => {
-  const user = getStoredUser();
-  if (!user?.token) throw new Error("No auth token found");
-
-  return {
-    headers: {
-      Authorization: `Bearer ${user.token}`,
-      "Content-Type": "application/json",
-    },
-  };
-};
 
 // --- Prescription Services ---
 
@@ -36,12 +8,11 @@ const getConfig = () => {
  */
 const getPrescriptions = async (): Promise<IPrescription[]> => {
   try {
-    const response = await axios.get(API_URL + "prescriptions", getConfig());
+    const response = await apiClient.get("prescriptions");
     return response.data;
   } catch (error) {
     if (error instanceof AxiosError) {
       if (error.response?.status === 404) {
-        // No prescriptions found, return empty array
         return [];
       }
       throw new Error(
@@ -57,10 +28,7 @@ const getPrescriptions = async (): Promise<IPrescription[]> => {
  */
 const getPrescriptionById = async (id: string): Promise<IPrescription> => {
   try {
-    const response = await axios.get(
-      API_URL + `prescriptions/${id}`,
-      getConfig(),
-    );
+    const response = await apiClient.get(`prescriptions/${id}`);
     return response.data;
   } catch (error) {
     if (error instanceof AxiosError) {
@@ -79,11 +47,7 @@ const createPrescription = async (
   prescriptionData: Omit<IPrescription, "_id" | "createdAt">,
 ): Promise<IPrescription> => {
   try {
-    const response = await axios.post(
-      API_URL + "prescriptions",
-      prescriptionData,
-      getConfig(),
-    );
+    const response = await apiClient.post("prescriptions", prescriptionData);
     return response.data;
   } catch (error) {
     if (error instanceof AxiosError) {
@@ -103,10 +67,9 @@ const updatePrescription = async (
   prescriptionData: Partial<IPrescription>,
 ): Promise<IPrescription> => {
   try {
-    const response = await axios.put(
-      API_URL + `prescriptions/${id}`,
+    const response = await apiClient.put(
+      `prescriptions/${id}`,
       prescriptionData,
-      getConfig(),
     );
     return response.data;
   } catch (error) {
@@ -124,7 +87,7 @@ const updatePrescription = async (
  */
 const deletePrescription = async (id: string): Promise<void> => {
   try {
-    await axios.delete(API_URL + `prescriptions/${id}`, getConfig());
+    await apiClient.delete(`prescriptions/${id}`);
   } catch (error) {
     if (error instanceof AxiosError) {
       throw new Error(

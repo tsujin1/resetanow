@@ -88,7 +88,6 @@ export const RxTemplate = forwardRef<HTMLDivElement, RxTemplateProps>(
                 {doctor.specialty}
               </p>
               <div className="text-[10px] mt-2 text-slate-500 font-sans leading-tight">
-                {/* Dynamically render address or default */}
                 {doctor.clinicAddress ? (
                   <p>{doctor.clinicAddress}</p>
                 ) : (
@@ -229,11 +228,14 @@ export const RxTemplate = forwardRef<HTMLDivElement, RxTemplateProps>(
                   )}
                 </p>
 
-                {/* License Numbers (Directly Under Name) */}
+                {/* License Numbers */}
                 <div className="text-[8px] text-slate-500 font-sans leading-tight mt-1">
                   <p>Lic No: {doctor.licenseNo}</p>
                   <p>PTR No: {doctor.ptrNo}</p>
-                  <p>S2 No: {doctor.s2No}</p>
+                  <p>
+                    S2 No:{" "}
+                    {doctor.s2No && doctor.s2No.trim() ? doctor.s2No : "N/A"}
+                  </p>
                 </div>
               </div>
             </div>

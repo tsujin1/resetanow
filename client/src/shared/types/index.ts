@@ -1,4 +1,3 @@
-// Shared types used across multiple features
 import type { IPatient } from "@/features/patients/types";
 import type { IPrescription } from "@/features/prescriptions/types";
 import type { IMedCert } from "@/features/medcert/types";

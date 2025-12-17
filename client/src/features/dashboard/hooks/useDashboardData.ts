@@ -324,12 +324,12 @@ export function useDashboardData() {
       const now = new Date();
       const currentMonth = now.getMonth();
       const prevMonth = currentMonth > 0 ? currentMonth - 1 : 11;
-      const currentMonthRevenue = monthlyChartData.find(
-        (m) => m.name === monthNames[currentMonth],
-      )?.revenue || 0;
-      const prevMonthRevenue = monthlyChartData.find(
-        (m) => m.name === monthNames[prevMonth],
-      )?.revenue || 0;
+      const currentMonthRevenue =
+        monthlyChartData.find((m) => m.name === monthNames[currentMonth])
+          ?.revenue || 0;
+      const prevMonthRevenue =
+        monthlyChartData.find((m) => m.name === monthNames[prevMonth])
+          ?.revenue || 0;
       const monthOverMonthGrowth =
         prevMonthRevenue > 0
           ? ((currentMonthRevenue - prevMonthRevenue) / prevMonthRevenue) * 100
@@ -338,7 +338,10 @@ export function useDashboardData() {
             : 0;
 
       // Calculate total revenue for percentages
-      const totalRevenue = revenueSource.reduce((sum, source) => sum + source.value, 0);
+      const totalRevenue = revenueSource.reduce(
+        (sum, source) => sum + source.value,
+        0,
+      );
 
       // Calculate date range (Last 30 Days)
       const endDate = new Date();
@@ -357,15 +360,25 @@ export function useDashboardData() {
       // Summary Metrics
       csvRows.push("SUMMARY METRICS");
       csvRows.push("Category,Total,This Month");
-      csvRows.push(`Total Patients,${metrics.patients.total},${metrics.patients.growth}% growth`);
-      csvRows.push(`Prescriptions Issued,${metrics.prescriptions.total},${metrics.prescriptions.monthly}`);
-      csvRows.push(`Medical Certificates Issued,${metrics.medCerts.total},${metrics.medCerts.monthly}`);
-      csvRows.push(`Total Revenue,₱${metrics.revenue.total.toLocaleString()},₱${metrics.revenue.monthly.toLocaleString()}`);
+      csvRows.push(
+        `Total Patients,${metrics.patients.total},${metrics.patients.growth}% growth`,
+      );
+      csvRows.push(
+        `Prescriptions Issued,${metrics.prescriptions.total},${metrics.prescriptions.monthly}`,
+      );
+      csvRows.push(
+        `Medical Certificates Issued,${metrics.medCerts.total},${metrics.medCerts.monthly}`,
+      );
+      csvRows.push(
+        `Total Revenue,₱${metrics.revenue.total.toLocaleString()},₱${metrics.revenue.monthly.toLocaleString()}`,
+      );
       csvRows.push("");
 
       // Weekly Analysis
       csvRows.push("WEEKLY ANALYSIS (Last 7 Days)");
-      csvRows.push("Day,Prescription Revenue,Medical Certificate Revenue,Daily Total");
+      csvRows.push(
+        "Day,Prescription Revenue,Medical Certificate Revenue,Daily Total",
+      );
       weeklyData.forEach((day) => {
         const dailyTotal = day.prescription + day.medCert;
         csvRows.push(
@@ -392,7 +405,9 @@ export function useDashboardData() {
           `${month.name},₱${month.revenue.toLocaleString()},${growthText}`,
         );
       });
-      csvRows.push(`Current Month Growth: ${monthOverMonthGrowth >= 0 ? "+" : ""}${monthOverMonthGrowth.toFixed(1)}%`);
+      csvRows.push(
+        `Current Month Growth: ${monthOverMonthGrowth >= 0 ? "+" : ""}${monthOverMonthGrowth.toFixed(1)}%`,
+      );
       csvRows.push("");
 
       // Revenue Sources Breakdown
@@ -410,7 +425,9 @@ export function useDashboardData() {
       // Create CSV
       const csvContent = csvRows.join("\n");
       const BOM = "\uFEFF";
-      const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
+      const blob = new Blob([BOM + csvContent], {
+        type: "text/csv;charset=utf-8;",
+      });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.setAttribute("href", url);

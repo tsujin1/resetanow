@@ -1,67 +1,40 @@
-import axios, { AxiosError } from "axios";
+import {
+  apiClient,
+  getStoredUser,
+  setStoredUser,
+  removeStoredUser,
+  AxiosError,
+} from "@/shared/lib/apiClient";
 import type { IDoctor } from "@/features/settings/types";
-
-const getApiUrl = () => {
-  const url = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-  return url.endsWith("/") ? url : url + "/";
-};
-const API_URL = getApiUrl();
 
 interface LoginData {
   email: string;
   password: string;
 }
 
-const getStoredUser = () => {
-  try {
-    const userStr = localStorage.getItem("user");
-    return userStr ? JSON.parse(userStr) : null;
-  } catch {
-    return null;
-  }
-};
-
-const setStoredUser = (data: unknown) => {
-  localStorage.setItem("user", JSON.stringify(data));
-};
-
-const getConfig = () => {
-  const user = getStoredUser();
-  if (!user?.token) throw new Error("No auth token found");
-
-  return {
-    headers: {
-      Authorization: `Bearer ${user.token}`,
-      "Content-Type": "application/json",
-    },
-  };
-};
-
 const register = async (userData: Partial<IDoctor>) => {
-  const response = await axios.post(API_URL + "auth/register", userData);
+  const response = await apiClient.post("auth/register", userData);
   if (response.data) setStoredUser(response.data);
   return response.data;
 };
 
 const login = async (userData: LoginData) => {
-  const response = await axios.post(API_URL + "auth/login", userData);
+  const response = await apiClient.post("auth/login", userData);
   if (response.data) setStoredUser(response.data);
   return response.data;
 };
 
 const logout = () => {
-  localStorage.removeItem("user");
+  removeStoredUser();
 };
 
 const getProfile = async () => {
   try {
-    const response = await axios.get(API_URL + "auth/profile", getConfig());
-
+    const response = await apiClient.get("auth/profile");
     const user = getStoredUser();
     if (user) {
       setStoredUser({ ...user, ...response.data });
     }
-
     return response.data;
   } catch (error) {
     if (error instanceof AxiosError && error.response?.status === 404) {
@@ -87,17 +60,11 @@ const getProfile = async () => {
 
 const updateProfile = async (data: Partial<IDoctor>) => {
   try {
-    const response = await axios.put(
-      API_URL + "auth/profile",
-      data,
-      getConfig(),
-    );
-
+    const response = await apiClient.put("auth/profile", data);
     const user = getStoredUser();
     if (user) {
       setStoredUser({ ...user, ...response.data });
     }
-
     return response.data;
   } catch (error) {
     if (error instanceof AxiosError && error.response?.status === 404) {
@@ -113,9 +80,7 @@ const updateProfile = async (data: Partial<IDoctor>) => {
 };
 
 const forgotPassword = async (email: string) => {
-  const response = await axios.post(API_URL + "auth/forgot-password", {
-    email,
-  });
+  const response = await apiClient.post("auth/forgot-password", { email });
   return response.data;
 };
 
@@ -124,7 +89,7 @@ const resetPassword = async (
   email: string,
   password: string,
 ) => {
-  const response = await axios.post(API_URL + "auth/reset-password", {
+  const response = await apiClient.post("auth/reset-password", {
     token,
     email,
     password,
@@ -134,8 +99,7 @@ const resetPassword = async (
 
 const deleteAccount = async (password: string) => {
   try {
-    const response = await axios.delete(API_URL + "auth/account", {
-      ...getConfig(),
+    const response = await apiClient.delete("auth/account", {
       data: { password },
     });
     return response.data;

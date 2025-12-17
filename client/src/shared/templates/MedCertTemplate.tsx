@@ -1,7 +1,6 @@
 import { forwardRef } from "react";
 
 // --- 1. Import Fonts from Assets ---
-// This ensures Vite bundles them and provides the correct URL
 import glacialRegular from "@/assets/fonts/glacial-indifference.regular.otf";
 import glacialBold from "@/assets/fonts/glacial-indifference.bold.otf";
 import lobsterRegular from "@/assets/fonts/lobster.otf";
@@ -109,7 +108,6 @@ export const MedCertTemplate = forwardRef<HTMLDivElement, MedCertTemplateProps>(
     return (
       <div ref={ref}>
         {/* Styles & Fonts */}
-        {/* We use the imported variables (glacialRegular, etc.) inside the template string */}
         <style type="text/css">
           {`
             @font-face {
@@ -133,7 +131,6 @@ export const MedCertTemplate = forwardRef<HTMLDivElement, MedCertTemplateProps>(
           `}
         </style>
 
-        {/* Font Pre-loader (Invisible) to ensure they render in PDF/Print */}
         <div
           className="absolute top-0 left-0 h-0 w-0 overflow-hidden opacity-0 pointer-events-none"
           aria-hidden="true"
@@ -370,11 +367,11 @@ export const MedCertTemplate = forwardRef<HTMLDivElement, MedCertTemplateProps>(
           <div
             style={{
               position: "absolute",
-              bottom: "30mm", // Lowered signature position by 10mm
-              right: "20mm", // Fixed distance from right edge
+              bottom: "30mm",
+              right: "20mm",
               textAlign: "center",
               width: "300px",
-              zIndex: 10, // On top
+              zIndex: 10,
             }}
           >
             <div
@@ -428,7 +425,7 @@ export const MedCertTemplate = forwardRef<HTMLDivElement, MedCertTemplateProps>(
               </span>
               <span style={{ display: "block" }}>PTR No. {doctor.ptrNo}</span>
               <span style={{ display: "block" }}>
-                S2 No. {doctor.s2No || "N/A"}
+                S2 No. {doctor.s2No && doctor.s2No.trim() ? doctor.s2No : "N/A"}
               </span>
             </div>
           </div>

@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, useContext } from "react";
+import { useRef, useState, useEffect, useContext, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   useForm,
@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { AuthContext } from "@/shared/context/AuthContext";
 import patientService from "@/features/patients/services/patientService";
 import prescriptionService from "@/features/prescriptions/services/prescriptionService";
+import authService from "@/features/auth/services/authService";
 import type { IPatient } from "@/features/patients/types";
 
 // --- IMPORT SHARED SCHEMA ---
@@ -31,14 +32,19 @@ import { RxTemplate } from "@/shared/templates/RxTemplate";
 
 export default function CreateRx() {
   const componentRef = useRef<HTMLDivElement>(null);
-  const { user } = useContext(AuthContext) || {};
+  const hasRefreshedUserRef = useRef(false);
+  const {
+    user,
+    isLoading: isLoadingUser,
+    setUser,
+  } = useContext(AuthContext) || {};
 
   // State
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [patients, setPatients] = useState<IPatient[]>([]);
   const [isLoadingPatients, setIsLoadingPatients] = useState(true);
-  const [isUserLoaded, setIsUserLoaded] = useState(false);
+  const [isRefreshingUser, setIsRefreshingUser] = useState(false);
 
   // URL Params
   const [searchParams] = useSearchParams();
@@ -62,19 +68,36 @@ export default function CreateRx() {
     name: "medications",
   });
 
-  // Watch values for logic
   const values = useWatch({ control: form.control });
   const selectedPatient = patients.find((p) => p._id === values.patientId);
 
-  // Track when user data is loaded
-  useEffect(() => {
-    if (user !== undefined) {
-      setIsUserLoaded(true);
-    }
-  }, [user]);
+  const canDownload = !!selectedPatient && !isLoadingPatients && !isLoadingUser;
 
-  // Logic: Disable download if no patient is selected
-  const canDownload = !!selectedPatient && !isLoadingPatients && isUserLoaded;
+  useEffect(() => {
+    const refreshUserProfile = async () => {
+      if (isLoadingUser || isRefreshingUser || hasRefreshedUserRef.current)
+        return;
+      if (!user || !setUser) return;
+
+      try {
+        setIsRefreshingUser(true);
+        hasRefreshedUserRef.current = true;
+        const userData = await authService.getProfile();
+        if (userData) {
+          setUser(userData);
+        }
+      } catch (error) {
+        console.error("Failed to refresh user profile:", error);
+        hasRefreshedUserRef.current = false;
+      } finally {
+        setIsRefreshingUser(false);
+      }
+    };
+
+    if (!isLoadingUser && user) {
+      refreshUserProfile();
+    }
+  }, [isLoadingUser, user, setUser, isRefreshingUser]);
 
   // Fetch Patients
   useEffect(() => {
@@ -107,11 +130,19 @@ export default function CreateRx() {
   // PDF Generation
   const handleDownloadPdf = async () => {
     const element = componentRef.current;
-    if (!element || !selectedPatient || !isUserLoaded) return;
+    if (!element || !selectedPatient || isLoadingUser) return;
 
     setIsGenerating(true);
 
     try {
+      await new Promise((resolve) => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            setTimeout(resolve, 50);
+          });
+        });
+      });
+
       const html2canvas = (await import("html2canvas-pro")).default;
       const { jsPDF } = await import("jspdf");
 
@@ -177,36 +208,39 @@ export default function CreateRx() {
     }
   };
 
-  // Safe doctor data with fallbacks - UPDATED to match RxTemplate requirements
-  // Note: Using 'role' as 'specialty' since the error indicates RxTemplate expects 'specialty'
-  const safeDoctorData = {
-    name: user?.name || "",
-    title: user?.title || "",
-    specialty: user?.role || "", // Changed from 'role' to 'specialty' to match RxTemplate type
-    licenseNo: user?.licenseNo || "",
-    ptrNo: user?.ptrNo || "",
-    s2No: user?.s2No || "",
-    signatureUrl: user?.signatureUrl || "",
-    clinicAddress: user?.clinicAddress || "",
-    contactNumber: user?.contactNumber || "",
-    clinicAvailability: user?.clinicAvailability || "",
-  };
+  const safeDoctorData = useMemo(() => {
+    if (!user) return null;
+    return {
+      name: user.name || "",
+      title: user.title || "",
+      specialty: user.role || "",
+      licenseNo: user.licenseNo || "",
+      ptrNo: user.ptrNo || "",
+      s2No: user.s2No || "",
+      signatureUrl: user.signatureUrl || "",
+      clinicAddress: user.clinicAddress || "",
+      contactNumber: user.contactNumber || "",
+      clinicAvailability: user.clinicAvailability || "",
+    };
+  }, [user]);
 
-  // Safe patient data with fallbacks
-  const safePatientData = {
-    patientName: selectedPatient?.name || "",
-    age: selectedPatient?.age || "",
-    sex: selectedPatient?.gender || "",
-    address: selectedPatient?.address || "",
-    date: values.date || "",
-    diagnosis: values.diagnosis || "",
-    medications: (values.medications || []).map((m) => ({
-      name: m.name || "",
-      dosage: m.dosage || "",
-      instructions: m.instructions || "",
-      quantity: m.quantity || "",
-    })),
-  };
+  const safePatientData = useMemo(
+    () => ({
+      patientName: selectedPatient?.name || "",
+      age: selectedPatient?.age || "",
+      sex: selectedPatient?.gender || "",
+      address: selectedPatient?.address || "",
+      date: values.date || "",
+      diagnosis: values.diagnosis || "",
+      medications: (values.medications || []).map((m) => ({
+        name: m.name || "",
+        dosage: m.dosage || "",
+        instructions: m.instructions || "",
+        quantity: m.quantity || "",
+      })),
+    }),
+    [selectedPatient, values.date, values.diagnosis, values.medications],
+  );
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -278,13 +312,18 @@ export default function CreateRx() {
           backgroundColor: "#ffffff",
         }}
       >
-        {isUserLoaded && (
-          <RxTemplate
-            ref={componentRef}
-            data={safePatientData}
-            doctor={safeDoctorData}
-          />
-        )}
+        {!isLoadingUser &&
+          !isRefreshingUser &&
+          user &&
+          safeDoctorData &&
+          safePatientData && (
+            <RxTemplate
+              key={`rx-${user._id || ""}-${selectedPatient?._id || ""}-${values.date || ""}-${values.diagnosis || ""}-${JSON.stringify(values.medications || [])}`}
+              ref={componentRef}
+              data={safePatientData}
+              doctor={safeDoctorData}
+            />
+          )}
       </div>
     </div>
   );
